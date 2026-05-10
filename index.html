@@ -273,7 +273,10 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:22px;heigh
         <button class="btn-add" id="o-add-btn">Aggiungi ✓</button>
       </div>
       <div id="o-list"></div>
-      <button class="btn-classifica" id="o-classifica">🏆 VEDI CLASSIFICA</button>
+      <div style="display:flex;gap:8px;margin-top:8px;">
+        <button class="btn-classifica" id="o-classifica" style="flex:2;">🏆 VEDI CLASSIFICA</button>
+        <button onclick="openPubblico()" style="flex:1;background:linear-gradient(135deg,#f59e0b,#d97706);color:white;border:none;border-radius:14px;padding:13px 8px;font-size:13px;font-weight:700;cursor:pointer;">📺 MAXI</button>
+      </div>
     </div>
   </div>
 </div>
@@ -315,7 +318,10 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:22px;heigh
 <div id="screen-classifica" class="screen">
   <div class="class-hdr">
     <button class="class-back" id="class-back">← INDIETRO</button>
-    <div class="class-title">🏆 Classifica</div>
+    <div style="display:flex;justify-content:space-between;align-items:center;">
+      <div class="class-title">🏆 Classifica</div>
+      <button onclick="openPubblico()" style="background:linear-gradient(135deg,#f59e0b,#d97706);border:none;color:white;border-radius:10px;padding:8px 14px;font-size:12px;font-weight:700;cursor:pointer;letter-spacing:1px;">📺 MAXISCHERMO</button>
+    </div>
     <div class="filter-row" id="class-fg"></div>
     <div class="filter-row" id="class-ft"></div>
   </div>
@@ -813,7 +819,7 @@ function openVote(i){
   var col=COLORS[c.genere];
   currentScores={};
   if(voti[i]&&voti[i].scores){ Object.keys(voti[i].scores).forEach(function(k){currentScores[k]=voti[i].scores[k];}); }
-  else { CATEGORIE.forEach(function(cat){currentScores[cat.id]=1;}); }
+  else { CATEGORIE.forEach(function(cat){currentScores[cat.id]=0;}); }
 
   // Style header
   var hdr=document.getElementById('vote-hdr');
@@ -878,14 +884,14 @@ function renderCatCards(col){
     top.appendChild(lbl); top.appendChild(sc);
     var row=document.createElement('div'); row.className='srow';
     var slider=document.createElement('input');
-    slider.type='range'; slider.min=1; slider.max=cat.max; slider.step=0.5; slider.value=val;
+    slider.type='range'; slider.min=0; slider.max=cat.max; slider.step=0.5; slider.value=val;
     slider.className='slider-range';
     slider.style.accentColor=col.accent;
     (function(catId,catMax){
       slider.oninput=function(){updateScore(catId,parseFloat(this.value));};
     })(cat.id,cat.max);
     var num=document.createElement('input');
-    num.type='number'; num.min=1; num.max=cat.max; num.step=0.5; num.value=val;
+    num.type='number'; num.min=0; num.max=cat.max; num.step=0.5; num.value=val;
     num.className='snum'; num.id='sc-num-'+cat.id;
     num.style.borderColor=col.accent; num.style.color=col.accent;
     (function(catId,catMax){
@@ -1263,11 +1269,144 @@ function updateOrgHeader(){
   var title=document.getElementById('o-hdr-title'); if(title) title.textContent=eventConfig.nomeEvento+' - '+eventConfig.edizione;
 }
 
+// SCHERMATA PUBBLICA
+function openPubblico(){
+  renderPubblico();
+  document.getElementById('screen-pubblico').style.display='block';
+  // Auto-refresh every 5 seconds
+  window._pubTimer = setInterval(renderPubblico, 5000);
+}
+function closePubblico(){
+  document.getElementById('screen-pubblico').style.display='none';
+  if(window._pubTimer) clearInterval(window._pubTimer);
+}
+function renderPubblico(){
+  // Reload all votes
+  var pending=GIUDICI.length;
+  var tmpAllVoti={};
+  GIUDICI.forEach(function(jn){
+    fbGet('voti/'+jn.replace(/ /g,'-').toLowerCase(), function(jv){
+      if(jv) tmpAllVoti[jn]=jv;
+      pending--;
+      if(pending===0){
+        fbGet('concorrenti', function(c){
+          var conc=c||concorrenti;
+          var items=conc.map(function(p,i){
+            var gt=0;
+            GIUDICI.forEach(function(jn){var jv=tmpAllVoti[jn];if(jv&&jv[i]&&jv[i].scores) Object.values(jv[i].scores).forEach(function(s){gt+=s;});});
+            return {p:p,idx:i,gt:gt};
+          }).filter(function(x){return !x.p.blocked;})
+           .sort(function(a,b){return b.gt-a.gt;});
+
+          var pub=document.getElementById('pub-list');
+          pub.innerHTML='';
+          document.getElementById('pub-title').textContent='🏆 Classifica Live';
+          document.getElementById('pub-sub').textContent=eventConfig.nomeEvento+' '+eventConfig.sottotitolo+' · '+eventConfig.edizione+' · '+eventConfig.data;
+
+          var medals=['🥇','🥈','🥉'];
+          items.forEach(function(item,rank){
+            var col=COLORS[item.p.genere]||{accent:'#7c3aed',light:'#ede9fe'};
+            var tc=TIPO_COLORS[item.p.tipo]||{accent:'#6b7280',light:'#f3f4f6'};
+            var pct=item.gt>0?(item.gt/(50*GIUDICI.length)*100):0;
+            var barColor=pct>=80?'#f59e0b':pct>=60?'#3b82f6':'#ef4444';
+            var medalBg=rank===0?'#f59e0b':rank===1?'#9ca3af':rank===2?'#b45309':'#374151';
+
+            var card=document.createElement('div');
+            card.style.cssText='background:'+(item.gt>0?'white':'rgba(255,255,255,.05)')+';border-radius:16px;padding:14px 16px;margin-bottom:10px;'+(rank===0&&item.gt>0?'box-shadow:0 0 0 3px #f59e0b;':'');
+
+            var row=document.createElement('div');
+            row.style.cssText='display:flex;align-items:center;gap:12px;';
+
+            var medal=document.createElement('div');
+            medal.style.cssText='width:48px;height:48px;border-radius:50%;background:'+medalBg+';display:flex;align-items:center;justify-content:center;font-weight:900;font-size:'+(rank<3?'24px':'16px')+';color:white;flex-shrink:0;';
+            medal.textContent=rank<3?medals[rank]:(rank+1);
+
+            var info=document.createElement('div');
+            info.style.cssText='flex:1;';
+            var nm=document.createElement('div');
+            nm.style.cssText='font-family:Playfair Display,serif;font-weight:700;font-size:18px;color:'+(item.gt>0?'#111827':'rgba(255,255,255,.5)')+';';
+            nm.textContent=item.p.nome;
+            var bdgs=document.createElement('div');
+            bdgs.style.cssText='display:flex;gap:5px;margin-top:4px;flex-wrap:wrap;';
+            var b1=makeBdg(item.p.genere,col.light,col.accent);
+            var b2=makeBdg(TIPO_ICO[item.p.tipo]+' '+item.p.tipo,tc.light,tc.accent);
+            bdgs.appendChild(b1);bdgs.appendChild(b2);
+            if(item.p.catGruppo){var cc=CAT_COLORS[item.p.catGruppo]||{accent:'#92400e',light:'#fef3c7'};bdgs.appendChild(makeBdg(item.p.catGruppo,cc.light,cc.accent));}
+            info.appendChild(nm);info.appendChild(bdgs);
+
+            var sc=document.createElement('div');
+            sc.style.cssText='text-align:right;';
+            if(item.gt>0){
+              var sn=document.createElement('div');
+              sn.style.cssText='font-family:Playfair Display,serif;font-weight:900;font-size:34px;color:#7c3aed;line-height:1;';
+              sn.textContent=item.gt.toFixed(1);
+              var sl=document.createElement('div');
+              sl.style.cssText='color:#9ca3af;font-size:11px;';
+              sl.textContent='Σ totale';
+              sc.appendChild(sn);sc.appendChild(sl);
+            } else {
+              var nd=document.createElement('span');
+              nd.style.cssText='color:rgba(255,255,255,.3);font-size:13px;';
+              nd.textContent='—';
+              sc.appendChild(nd);
+            }
+
+            row.appendChild(medal);row.appendChild(info);row.appendChild(sc);
+            card.appendChild(row);
+
+            if(item.gt>0){
+              var pw=document.createElement('div');
+              pw.style.cssText='display:flex;align-items:center;gap:8px;margin-top:10px;';
+              var pb=document.createElement('div');
+              pb.style.cssText='height:8px;flex:1;border-radius:99px;background:#e5e7eb;overflow:hidden;';
+              var pf=document.createElement('div');
+              pf.style.cssText='height:100%;width:'+pct+'%;background:'+barColor+';border-radius:99px;';
+              pb.appendChild(pf);
+              var ps=document.createElement('span');
+              ps.style.cssText='font-weight:700;font-size:13px;color:'+barColor+';min-width:40px;';
+              ps.textContent=item.gt.toFixed(1);
+              pw.appendChild(pb);pw.appendChild(ps);
+              card.appendChild(pw);
+
+              // Per-judge scores
+              var jrow=document.createElement('div');
+              jrow.style.cssText='display:flex;flex-wrap:wrap;gap:4px;margin-top:6px;';
+              GIUDICI.forEach(function(jn){
+                var jv=tmpAllVoti[jn];
+                var js=0;
+                if(jv&&jv[item.idx]&&jv[item.idx].scores) Object.values(jv[item.idx].scores).forEach(function(s){js+=s;});
+                if(js>0){
+                  var jb=makeBdg(jn.split(' ')[0]+': '+js.toFixed(1),'#f3f4f6','#374151');
+                  jrow.appendChild(jb);
+                }
+              });
+              card.appendChild(jrow);
+            }
+            pub.appendChild(card);
+          });
+        });
+      }
+    });
+  });
+}
+
 // INIT - load config first then show login
 loadConfig(function(){
   initLogin();
   showScreen('login');
 });
 </script>
+<!-- SCHERMATA PUBBLICA MAXISCHERMO -->
+<div id="screen-pubblico" style="display:none;position:fixed;inset:0;background:linear-gradient(160deg,#0f0c29,#302b63,#24243e);z-index:99999;overflow-y:auto;font-family:Lato,sans-serif;">
+  <div style="padding:20px 20px 10px;display:flex;align-items:center;justify-content:space-between;">
+    <div style="font-family:Playfair Display,serif;font-size:28px;font-weight:900;color:white;" id="pub-title">Classifica</div>
+    <button onclick="closePubblico()" style="background:rgba(255,255,255,.15);border:none;color:white;border-radius:8px;padding:8px 16px;font-size:13px;cursor:pointer;">✕ Chiudi</button>
+  </div>
+  <div style="text-align:center;margin-bottom:16px;">
+    <div style="font-size:12px;color:rgba(255,255,255,.5);letter-spacing:2px;" id="pub-sub"></div>
+  </div>
+  <div id="pub-list" style="padding:0 16px 40px;max-width:800px;margin:0 auto;"></div>
+</div>
+
 </body>
 </html>
