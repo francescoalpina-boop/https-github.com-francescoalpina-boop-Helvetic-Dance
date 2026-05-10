@@ -323,6 +323,22 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:22px;heigh
 </div>
 
 <!-- MODALS -->
+<!-- JUDGE PIN MODAL -->
+<div id="modal-judge-pin" style="display:none" class="modal-overlay">
+  <div class="modal-box">
+    <div class="modal-icon" id="judge-pin-icon">👩</div>
+    <div class="modal-title" id="judge-pin-title">Accesso Giudice</div>
+    <div class="modal-sub" id="judge-pin-sub">Inserisci il tuo nome per entrare</div>
+    <input type="text" maxlength="10" id="judge-pin-input" placeholder="Scrivi il tuo nome..."
+      style="width:100%;text-align:center;border:2px solid #e5e7eb;border-radius:12px;padding:12px;font-size:22px;font-weight:700;letter-spacing:1px;outline:none;margin-bottom:14px;box-sizing:border-box;text-transform:uppercase;font-family:Lato,sans-serif;font-size:16px;"/>
+    <div id="judge-pin-err" class="pin-error" style="display:none">❌ Codice errato. Riprova.</div>
+    <div class="btn-row">
+      <button class="btn-cancel" id="judge-pin-cancel">Annulla</button>
+      <button style="flex:1;background:linear-gradient(135deg,#166534,#15803d);border:none;border-radius:10px;padding:11px;font-size:14px;font-weight:700;color:white;cursor:pointer;" id="judge-pin-ok">Entra →</button>
+    </div>
+  </div>
+</div>
+
 <div id="modal-admin" style="display:none" class="modal-overlay">
   <div class="modal-box">
     <div class="modal-icon">🏅</div>
@@ -397,6 +413,12 @@ var CAT_COLORS = {
   Senior: {accent:'#be185d',light:'#fce7f3'}
 };
 var GIUDICI  = ['Mia Molinari','Betty Staly','Davide Cauli',"Elena D'Amario"];
+var GIUDICI_PIN = {
+  'Mia Molinari': 'MIA',
+  'Betty Staly':  'BETTY',
+  'Davide Cauli': 'DAVIDE',
+  "Elena D'Amario": 'ELENA'
+};
 
 // Event config (loaded from Firebase, editable by organizer)
 var eventConfig = {
@@ -516,6 +538,29 @@ function renderCurrent(){
 }
 
 // LOGIN
+var pendingJudge = null;
+function openJudgePin(g){
+  pendingJudge = g;
+  document.getElementById('judge-pin-title').textContent = g;
+  document.getElementById('judge-pin-sub').textContent = 'Inserisci il tuo codice personale';
+  document.getElementById('judge-pin-input').value = '';
+  document.getElementById('judge-pin-err').style.display = 'none';
+  document.getElementById('modal-judge-pin').style.display = 'flex';
+  setTimeout(function(){document.getElementById('judge-pin-input').focus();}, 100);
+}
+function confirmJudgePin(){
+  var val = document.getElementById('judge-pin-input').value.trim().toUpperCase();
+  var expected = GIUDICI_PIN[pendingJudge] ? GIUDICI_PIN[pendingJudge].toUpperCase() : '';
+  if(val === expected){
+    document.getElementById('modal-judge-pin').style.display = 'none';
+    loginAs(pendingJudge);
+    pendingJudge = null;
+  } else {
+    document.getElementById('judge-pin-err').style.display = 'block';
+    document.getElementById('judge-pin-input').value = '';
+  }
+}
+
 function refreshLoginLabels(){
   var t1=document.getElementById('login-t1'); if(t1) t1.textContent=eventConfig.nomeEvento;
   var t2=document.getElementById('login-t2'); if(t2) t2.textContent=eventConfig.sottotitolo;
@@ -529,16 +574,26 @@ function initLogin(){
   GIUDICI.forEach(function(g,i){
     var btn=document.createElement('button');
     btn.className='judge-btn';
-    var ico=document.createElement('div'); ico.className='judge-ico'; ico.textContent=i===2?'👨‍⚖️':'👩‍⚖️';
+    var ico=document.createElement('div'); ico.className='judge-ico'; ico.textContent=i===2?'👨':'👩';
     var info=document.createElement('div');
     var nm=document.createElement('div'); nm.className='judge-nm'; nm.textContent=g;
-    var rl=document.createElement('div'); rl.className='judge-rl'; rl.textContent='GIUDICE';
+    var rl=document.createElement('div'); rl.className='judge-rl'; rl.textContent='TOCCA PER ENTRARE';
     info.appendChild(nm); info.appendChild(rl);
     var arr=document.createElement('div'); arr.className='judge-arr'; arr.textContent='›';
     btn.appendChild(ico); btn.appendChild(info); btn.appendChild(arr);
-    btn.onclick=function(){loginAs(g);};
+    btn.onclick=function(){openJudgePin(g);};
     list.appendChild(btn);
   });
+  // Wire judge PIN modal
+  document.getElementById('judge-pin-cancel').onclick=function(){
+    document.getElementById('modal-judge-pin').style.display='none';
+    pendingJudge=null;
+  };
+  document.getElementById('judge-pin-ok').onclick=confirmJudgePin;
+  document.getElementById('judge-pin-input').onkeydown=function(e){
+    if(e.key==='Enter') confirmJudgePin();
+  };
+
   document.getElementById('admin-btn').onclick=function(){
     document.getElementById('admin-pin-input').value='';
     document.getElementById('admin-pin-err').style.display='none';
