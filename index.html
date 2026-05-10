@@ -1,0 +1,973 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"/>
+<meta name="theme-color" content="#000"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+<meta name="apple-mobile-web-app-title" content="HD Competition"/>
+<title>Helvetic Dance Competition</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Lato:wght@400;600;700&display=swap" rel="stylesheet"/>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:#000;font-family:'Lato',sans-serif;overscroll-behavior:none;-webkit-tap-highlight-color:transparent;min-height:100vh;}
+.screen{display:none;min-height:100vh;}
+.screen.active{display:block;}
+button{font-family:'Lato',sans-serif;cursor:pointer;}
+input,textarea{font-family:'Lato',sans-serif;}
+input[type=range]{-webkit-appearance:none;appearance:none;background:transparent;width:100%;cursor:pointer;}
+input[type=range]::-webkit-slider-runnable-track{height:6px;background:#e5e7eb;border-radius:99px;}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:22px;height:22px;border-radius:50%;margin-top:-8px;cursor:pointer;background:#4ade80;}
+
+/* MODAL OVERLAY */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.8);display:flex;align-items:center;justify-content:center;z-index:9999;padding:20px;}
+.modal-box{background:white;border-radius:20px;padding:26px 22px;width:100%;max-width:310px;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.3);}
+.modal-icon{font-size:38px;margin-bottom:10px;}
+.modal-title{font-family:'Playfair Display',serif;font-size:18px;font-weight:700;color:#111827;margin-bottom:4px;}
+.modal-sub{font-size:13px;color:#6b7280;margin-bottom:16px;}
+.pin-input{width:100%;text-align:center;border:2px solid #e5e7eb;border-radius:12px;padding:12px;font-size:28px;font-weight:700;letter-spacing:8px;outline:none;margin-bottom:14px;box-sizing:border-box;}
+.pin-input.error{border-color:#ef4444;}
+.pin-error{color:#ef4444;font-size:13px;margin-bottom:10px;font-weight:600;}
+.btn-row{display:flex;gap:8px;}
+.btn-cancel{flex:1;background:#f3f4f6;border:none;border-radius:10px;padding:11px;font-size:14px;font-weight:600;color:#374151;cursor:pointer;}
+.btn-confirm{flex:1;background:linear-gradient(135deg,#1e1b4b,#1e3a5f);border:none;border-radius:10px;padding:11px;font-size:14px;font-weight:700;color:white;cursor:pointer;}
+.btn-green{width:100%;background:linear-gradient(135deg,#166534,#15803d);border:none;border-radius:12px;padding:13px;font-size:14px;font-weight:700;color:white;cursor:pointer;margin-bottom:8px;}
+.btn-red{width:100%;background:linear-gradient(135deg,#991b1b,#ef4444);border:none;border-radius:12px;padding:13px;font-size:14px;font-weight:700;color:white;cursor:pointer;margin-bottom:8px;}
+
+/* LOGIN */
+#screen-login{background:linear-gradient(180deg,#000 0%,#0a1a0a 40%,#0d1f0d 100%);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px 20px;position:relative;overflow:hidden;}
+.glow{position:absolute;top:20%;left:50%;transform:translateX(-50%);width:400px;height:400px;border-radius:50%;background:radial-gradient(circle,rgba(34,197,94,.12) 0%,transparent 70%);pointer-events:none;}
+.login-logo{width:100px;height:100px;border-radius:20px;background:linear-gradient(135deg,#0a2a0a,#1a4a1a);border:2px solid rgba(34,197,94,.4);display:flex;align-items:center;justify-content:center;margin-bottom:18px;box-shadow:0 0 50px rgba(34,197,94,.35);}
+.login-sub{font-size:10px;letter-spacing:5px;color:rgba(34,197,94,.7);text-transform:uppercase;margin-bottom:6px;text-align:center;}
+.login-t1{font-family:'Playfair Display',serif;font-size:34px;font-weight:900;color:white;line-height:1.1;text-align:center;}
+.login-t2{font-family:'Playfair Display',serif;font-size:34px;font-weight:900;line-height:1.1;background:linear-gradient(90deg,#4ade80,#22c55e,#86efac);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:8px;text-align:center;}
+.login-divline{display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:8px;}
+.dl{height:1px;width:40px;}.dl-l{background:linear-gradient(90deg,transparent,#4ade80);}.dl-r{background:linear-gradient(90deg,#4ade80,transparent);}
+.login-star{font-size:16px;color:#4ade80;}
+.login-badge{display:inline-block;background:linear-gradient(135deg,#14532d,#15803d);border:1px solid rgba(74,222,128,.5);border-radius:50px;padding:4px 18px;margin-bottom:10px;}
+.login-badge span{font-size:11px;font-weight:800;color:#4ade80;letter-spacing:3px;text-transform:uppercase;}
+.login-date{color:rgba(255,255,255,.55);font-size:12px;letter-spacing:2px;display:flex;align-items:center;justify-content:center;gap:8px;}
+.login-datebar{height:1px;width:40px;background:rgba(255,255,255,.15);}
+.login-sep{width:100%;max-width:340px;height:1px;background:linear-gradient(90deg,transparent,rgba(74,222,128,.3),transparent);margin:16px 0 10px;}
+.login-albl{color:rgba(255,255,255,.45);font-size:10px;margin-bottom:10px;letter-spacing:3px;text-transform:uppercase;}
+.judge-list{display:flex;flex-direction:column;gap:8px;width:100%;max-width:340px;}
+.judge-btn{background:rgba(255,255,255,.04);border:1px solid rgba(74,222,128,.22);border-radius:13px;padding:11px 14px;color:white;font-size:14px;font-weight:600;text-align:left;display:flex;align-items:center;gap:12px;width:100%;}
+.judge-btn:active{background:rgba(74,222,128,.1);}
+.judge-ico{width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,#166534,#4ade80);display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0;}
+.judge-nm{font-weight:700;font-size:14px;}
+.judge-rl{font-size:10px;color:rgba(74,222,128,.6);letter-spacing:1px;}
+.judge-arr{margin-left:auto;color:rgba(74,222,128,.5);font-size:18px;}
+.login-sep2{width:100%;max-width:340px;height:1px;background:linear-gradient(90deg,transparent,rgba(245,158,11,.3),transparent);margin:14px 0 10px;}
+.admin-btn{width:100%;max-width:340px;background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.3);border-radius:13px;padding:11px 14px;color:white;font-size:14px;font-weight:600;display:flex;align-items:center;gap:12px;}
+.admin-ico{width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,#92400e,#f59e0b);display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0;}
+.login-footer{margin-top:24px;font-size:10px;color:rgba(255,255,255,.18);letter-spacing:2px;text-transform:uppercase;}
+
+/* SHARED HEADER */
+.main-hdr{color:white;padding:13px 13px 11px;}
+.hdr-top{display:flex;align-items:center;gap:10px;margin-bottom:10px;}
+.hdr-logo{width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:19px;flex-shrink:0;}
+.hdr-info{flex:1;}
+.hdr-sub{font-size:9px;opacity:.55;letter-spacing:3px;text-transform:uppercase;}
+.hdr-title{font-family:'Playfair Display',serif;font-size:15px;font-weight:700;}
+.hdr-name{font-size:11px;margin-top:1px;}
+.hdr-sync{text-align:right;font-size:10px;opacity:.65;}
+.hdr-exit{margin-top:3px;border:none;color:white;border-radius:6px;padding:2px 7px;font-size:10px;cursor:pointer;}
+.tabs{display:flex;gap:5px;overflow-x:auto;padding-bottom:2px;}
+.tab{flex-shrink:0;border-radius:10px;padding:5px 7px;text-align:center;min-width:52px;cursor:pointer;}
+.tab-name{font-size:8px;font-weight:700;text-transform:uppercase;}
+.tab-count{font-size:15px;font-weight:900;}
+.tab-val{font-size:9px;}
+
+/* MAIN CONTENT */
+.main-wrap{padding-bottom:80px;}
+.main-inner{max-width:600px;margin:0 auto;padding:13px 12px 0;}
+.add-form{background:white;border-radius:18px;padding:15px;box-shadow:0 4px 20px rgba(0,0,0,.07);margin-bottom:14px;}
+.add-title{font-weight:700;margin-bottom:11px;font-size:14px;}
+.add-input{width:100%;border:1.5px solid #e5e7eb;border-radius:10px;padding:10px 13px;font-size:14px;outline:none;margin-bottom:10px;box-sizing:border-box;}
+.slbl{font-size:10px;color:#9ca3af;margin-bottom:5px;letter-spacing:1px;text-transform:uppercase;}
+.btn-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:5px;margin-bottom:9px;}
+.btn-row2{display:flex;gap:5px;margin-bottom:9px;}
+.btg{padding:7px 4px;border-radius:10px;border:2px solid #e5e7eb;background:white;color:#9ca3af;font-weight:600;font-size:10px;cursor:pointer;}
+.btn-add{width:100%;border:none;border-radius:10px;padding:11px;font-size:14px;font-weight:700;cursor:pointer;color:white;background:linear-gradient(135deg,#92400e,#b45309);}
+.genre-sec{margin-bottom:16px;}
+.genre-hdr{display:flex;align-items:center;gap:8px;margin-bottom:7px;}
+.genre-bar{height:3px;border-radius:99px;width:20px;}
+.genre-lbl{font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:1px;}
+.genre-flex{height:3px;flex:1;border-radius:99px;}
+.pcard{background:white;border-radius:12px;padding:10px 12px;box-shadow:0 2px 10px rgba(0,0,0,.06);display:flex;align-items:center;gap:8px;margin-bottom:6px;border-left:4px solid;}
+.pname{font-family:'Playfair Display',serif;font-weight:700;font-size:14px;color:#111827;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.pmeta{display:flex;align-items:center;gap:4px;margin-top:2px;flex-wrap:wrap;}
+.bdg{font-size:10px;padding:2px 6px;border-radius:99px;font-weight:600;}
+.empty{text-align:center;color:#9ca3af;padding:40px 20px;font-size:14px;}
+.btn-classifica{margin-top:8px;width:100%;background:linear-gradient(135deg,#0f0c29,#302b63);color:white;border:none;border-radius:14px;padding:13px;font-size:15px;font-weight:700;cursor:pointer;letter-spacing:1px;}
+
+/* VOTE SCREEN */
+#screen-vote{padding-bottom:80px;}
+.vote-hdr{color:white;padding:18px 18px 14px;}
+.vote-back{background:rgba(255,255,255,.2);border:none;color:white;border-radius:8px;padding:5px 14px;cursor:pointer;font-size:12px;margin-bottom:10px;letter-spacing:1px;display:block;}
+.vote-top{display:flex;justify-content:space-between;align-items:flex-start;}
+.vote-sub-lbl{font-size:11px;opacity:.75;letter-spacing:2px;text-transform:uppercase;}
+.vote-nm{font-family:'Playfair Display',serif;font-size:22px;font-weight:700;margin-top:2px;}
+.vote-tot-lbl{font-size:10px;opacity:.7;text-align:right;}
+.vote-tot-num{font-family:'Playfair Display',serif;font-size:38px;font-weight:900;line-height:1;text-align:right;}
+.vote-tot-max{font-size:11px;opacity:.6;text-align:right;}
+.vote-body{padding:14px;max-width:560px;margin:0 auto;}
+.judges-box{background:white;border-radius:14px;padding:14px 16px;margin-bottom:12px;box-shadow:0 2px 12px rgba(0,0,0,.08);}
+.judges-lbl{font-size:11px;color:#6b7280;letter-spacing:1px;text-transform:uppercase;margin-bottom:10px;font-weight:600;}
+.judge-row{display:flex;align-items:center;margin-bottom:6px;}
+.judge-row-nm{font-size:12px;font-weight:600;min-width:110px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.judge-row-bar-wrap{flex:1;height:6px;background:#e5e7eb;border-radius:99px;margin:0 8px;overflow:hidden;}
+.judge-row-bar{height:100%;border-radius:99px;}
+.judge-row-score{font-size:13px;font-weight:700;min-width:36px;text-align:right;}
+.grand-total-row{display:flex;justify-content:space-between;align-items:center;border-top:1px solid #f3f4f6;padding-top:10px;margin-top:4px;}
+.grand-total-lbl{font-size:12px;color:#6b7280;font-weight:600;}
+.grand-total-num{font-family:'Playfair Display',serif;font-size:22px;font-weight:900;color:#7c3aed;}
+.cat-card{background:white;border-radius:14px;padding:14px 16px;margin-bottom:10px;box-shadow:0 2px 12px rgba(0,0,0,.06);}
+.cat-top{display:flex;justify-content:space-between;margin-bottom:10px;}
+.cat-lbl{font-weight:700;color:#374151;font-size:14px;}
+.cat-sc{font-weight:700;font-size:14px;}
+.srow{display:flex;align-items:center;gap:8px;}
+.snum{width:50px;text-align:center;border:2px solid;border-radius:8px;padding:4px;font-family:'Playfair Display',serif;font-weight:700;font-size:16px;background:white;outline:none;}
+.smax{color:#9ca3af;font-size:12px;min-width:28px;}
+.note-card{background:white;border-radius:14px;padding:14px 16px;margin-bottom:14px;box-shadow:0 2px 12px rgba(0,0,0,.06);}
+.note-lbl{font-weight:700;color:#374151;margin-bottom:8px;font-size:14px;}
+.note-card textarea{width:100%;border:1.5px solid #e5e7eb;border-radius:10px;padding:10px 12px;font-size:14px;resize:vertical;outline:none;box-sizing:border-box;}
+.btn-save{width:100%;border:none;border-radius:14px;padding:15px;font-size:16px;font-weight:700;cursor:pointer;color:white;letter-spacing:1px;}
+
+/* CLASSIFICA */
+#screen-classifica{background:linear-gradient(160deg,#0f0c29,#302b63,#24243e);padding-bottom:80px;}
+.class-hdr{padding:20px 16px 12px;color:white;}
+.class-back{background:rgba(255,255,255,.12);border:none;color:white;border-radius:8px;padding:5px 14px;cursor:pointer;font-size:12px;margin-bottom:12px;letter-spacing:1px;display:block;}
+.class-title{font-family:'Playfair Display',serif;font-size:26px;font-weight:700;}
+.filter-row{display:flex;gap:6px;margin-top:10px;flex-wrap:wrap;}
+.fbtn{padding:4px 10px;border-radius:99px;border:none;font-weight:600;font-size:11px;cursor:pointer;}
+.fbtn-on{background:white;color:#302b63;}
+.fbtn-off{background:rgba(255,255,255,.15);color:white;}
+.class-body{padding:0 12px;max-width:600px;margin:0 auto;}
+.rank-card{border-radius:16px;padding:13px 15px;margin-bottom:9px;}
+.rank-voted{background:white;}
+.rank-empty{background:rgba(255,255,255,.05);opacity:.5;}
+.rank-gold{box-shadow:0 0 0 3px #f59e0b;}
+.rank-row{display:flex;align-items:center;gap:10px;}
+.rank-medal{width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:900;flex-shrink:0;}
+.rank-info{flex:1;}
+.rank-nm{font-family:'Playfair Display',serif;font-weight:700;font-size:15px;}
+.rank-bdgs{display:flex;gap:4px;margin-top:3px;flex-wrap:wrap;}
+.rank-sc{text-align:right;}
+.rank-sc-num{font-family:'Playfair Display',serif;font-weight:900;font-size:26px;line-height:1;}
+.rank-sc-lbl{color:#9ca3af;font-size:10px;}
+.prog-wrap{display:flex;align-items:center;gap:8px;margin-top:8px;}
+.prog-bg{height:7px;flex:1;border-radius:99px;background:#e5e7eb;overflow:hidden;}
+.prog-fill{height:100%;border-radius:99px;}
+.prog-sc{font-weight:700;font-size:12px;min-width:36px;}
+.jdg-bdgs{display:flex;flex-wrap:wrap;gap:4px;margin-top:6px;}
+.no-results{color:rgba(255,255,255,.4);text-align:center;padding:40px;}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="screen-login" class="screen active">
+  <div class="glow"></div>
+  <div class="login-logo"><span style="font-size:46px">🎭</span></div>
+  <div class="login-sub">Sistema di Valutazione Ufficiale</div>
+  <div class="login-t1">Helvetic Dance</div>
+  <div class="login-t2">Competition</div>
+  <div class="login-divline"><div class="dl dl-l"></div><div class="login-star">✦</div><div class="dl dl-r"></div></div>
+  <div class="login-badge"><span>2ª Edizione</span></div>
+  <div class="login-date"><div class="login-datebar"></div>📅 28 novembre 2026<div class="login-datebar"></div></div>
+  <div class="login-sep"></div>
+  <div class="login-albl">Accesso Giudici</div>
+  <div class="judge-list" id="judge-list"></div>
+  <div class="login-sep2"></div>
+  <button class="admin-btn" id="admin-btn">
+    <div class="admin-ico">🏅</div>
+    <div><div style="font-weight:700">Organizzatore</div><div style="font-size:10px;color:rgba(245,158,11,.6);letter-spacing:1px">ACCESSO RISERVATO</div></div>
+    <div style="margin-left:auto;color:rgba(245,158,11,.5);font-size:16px">🔐</div>
+  </button>
+  <div class="login-footer">© Helvetic Dance Competition 2026</div>
+</div>
+
+<!-- GIUDICE MAIN -->
+<div id="screen-giudice" class="screen">
+  <div class="main-hdr" style="background:linear-gradient(135deg,#1e1b4b 0%,#1e3a5f 100%)">
+    <div class="hdr-top">
+      <div class="hdr-logo" style="background:rgba(255,255,255,.1)">🎭</div>
+      <div class="hdr-info">
+        <div class="hdr-sub">Giudice · 28 nov 2026</div>
+        <div class="hdr-title">HDC 2ª Edizione</div>
+        <div class="hdr-name" style="color:#4ade80" id="g-judge-name"></div>
+      </div>
+      <div class="hdr-sync">
+        <div id="g-sync"></div>
+        <div id="g-counts"></div>
+        <button class="hdr-exit" style="background:rgba(255,255,255,.15)" id="g-logout">ESCI</button>
+      </div>
+    </div>
+    <div class="tabs" id="g-tabs"></div>
+  </div>
+  <div class="main-wrap" style="background:linear-gradient(160deg,#fdf4ff 0%,#f0f9ff 100%)">
+    <div class="main-inner">
+      <div id="g-list"></div>
+      <button class="btn-classifica" id="g-classifica" style="display:none">🏆 VEDI CLASSIFICA</button>
+    </div>
+  </div>
+</div>
+
+<!-- VOTE -->
+<div id="screen-vote" class="screen">
+  <div id="vote-hdr" class="vote-hdr">
+    <button class="vote-back" id="vote-back">← INDIETRO</button>
+    <div class="vote-top">
+      <div><div class="vote-sub-lbl" id="vote-sub"></div><div class="vote-nm" id="vote-nm"></div></div>
+      <div><div class="vote-tot-lbl">MIO VOTO</div><div class="vote-tot-num" id="vote-tot">0</div><div class="vote-tot-max">/50</div></div>
+    </div>
+  </div>
+  <div class="vote-body">
+    <div class="judges-box" id="judges-box"></div>
+    <div id="cat-cards"></div>
+    <div class="note-card">
+      <div class="note-lbl">📝 Note</div>
+      <textarea id="vote-notes" rows="3" placeholder="Osservazioni..."></textarea>
+    </div>
+    <button class="btn-save" id="btn-save">✓ SALVA VOTO</button>
+  </div>
+</div>
+
+<!-- ORGANIZZATORE -->
+<div id="screen-organizzatore" class="screen">
+  <div class="main-hdr" style="background:linear-gradient(135deg,#92400e 0%,#b45309 100%);box-shadow:0 6px 28px rgba(146,64,14,.4)">
+    <div class="hdr-top">
+      <div class="hdr-logo" style="background:rgba(255,255,255,.15)">🏅</div>
+      <div class="hdr-info">
+        <div class="hdr-sub" style="opacity:.7">Pannello Organizzatore</div>
+        <div class="hdr-title">HDC 2ª Edizione</div>
+        <div class="hdr-name" style="color:#fde68a">28 novembre 2026</div>
+      </div>
+      <div class="hdr-sync">
+        <div id="o-sync"></div>
+        <div id="o-counts"></div>
+        <button class="hdr-exit" style="background:rgba(255,255,255,.2)" id="o-logout">ESCI</button>
+      </div>
+    </div>
+    <div class="tabs" id="o-tabs"></div>
+  </div>
+  <div class="main-wrap" style="background:linear-gradient(160deg,#fff8f0 0%,#fffbf0 100%)">
+    <div class="main-inner">
+      <div class="add-form" style="border:2px solid #fde68a">
+        <div class="add-title" style="color:#92400e">➕ Aggiungi partecipante</div>
+        <input type="text" class="add-input" id="o-new-name" placeholder="Nome o numero esibizione..."/>
+        <div class="slbl">Genere</div>
+        <div class="btn-grid" id="o-genre-sel"></div>
+        <div class="slbl">Tipo</div>
+        <div class="btn-row2" id="o-tipo-sel"></div>
+        <div id="o-cat-wrap" style="display:none">
+          <div class="slbl">Categoria</div>
+          <div class="btn-row2" id="o-cat-sel"></div>
+        </div>
+        <button class="btn-add" id="o-add-btn">Aggiungi ✓</button>
+      </div>
+      <div id="o-list"></div>
+      <button class="btn-classifica" id="o-classifica">🏆 VEDI CLASSIFICA</button>
+    </div>
+  </div>
+</div>
+
+<!-- CLASSIFICA -->
+<div id="screen-classifica" class="screen">
+  <div class="class-hdr">
+    <button class="class-back" id="class-back">← INDIETRO</button>
+    <div class="class-title">🏆 Classifica</div>
+    <div class="filter-row" id="class-fg"></div>
+    <div class="filter-row" id="class-ft"></div>
+  </div>
+  <div class="class-body" id="class-body"></div>
+</div>
+
+<!-- MODALS -->
+<div id="modal-admin" style="display:none" class="modal-overlay">
+  <div class="modal-box">
+    <div class="modal-icon">🏅</div>
+    <div class="modal-title">Accesso Organizzatore</div>
+    <div class="modal-sub">Inserisci il codice di accesso</div>
+    <input type="password" inputmode="numeric" maxlength="4" id="admin-pin-input" placeholder="••••" class="pin-input"/>
+    <div id="admin-pin-err" class="pin-error" style="display:none">❌ Codice errato</div>
+    <div class="btn-row">
+      <button class="btn-cancel" id="admin-modal-cancel">Annulla</button>
+      <button style="flex:1;background:linear-gradient(135deg,#92400e,#f59e0b);border:none;border-radius:10px;padding:11px;font-size:14px;font-weight:700;color:white;cursor:pointer" id="admin-modal-ok">Entra →</button>
+    </div>
+  </div>
+</div>
+
+<div id="modal-pin" style="display:none" class="modal-overlay">
+  <div class="modal-box" id="modal-pin-box"></div>
+</div>
+
+<script>
+var GENERI = ['Classico','Contemporaneo','Moderno','Hip Hop','Urban Dance Mix Style'];
+var TIPI   = ['Assolo','Passo a Due','Gruppo'];
+var CAT_GRUPPO = ['Young','Junior','Senior'];
+var TIPO_ICO = {Assolo:'🕺','Passo a Due':'👯',Gruppo:'🎭'};
+var GIUDICI  = ['Mia Molinari','Betty Staly','Davide Cauli',"Elena D'Amario"];
+var CATEGORIE = [
+  {id:'tecnica',label:'Tecnica',max:10},
+  {id:'espressivita',label:'Espressività',max:10},
+  {id:'coreografia',label:'Coreografia',max:10},
+  {id:'musicalita',label:'Musicalità',max:10},
+  {id:'presenza',label:'Presenza scenica',max:10}
+];
+var COLORS = {
+  'Classico':             {accent:'#be185d',light:'#fce7f3',dark:'#9d174d',tab:'#f9a8d4'},
+  'Contemporaneo':        {accent:'#1d4ed8',light:'#dbeafe',dark:'#1e3a8a',tab:'#93c5fd'},
+  'Moderno':              {accent:'#7c3aed',light:'#ede9fe',dark:'#5b21b6',tab:'#c4b5fd'},
+  'Hip Hop':              {accent:'#15803d',light:'#dcfce7',dark:'#14532d',tab:'#86efac'},
+  'Urban Dance Mix Style':{accent:'#ea580c',light:'#ffedd5',dark:'#c2410c',tab:'#fdba74'}
+};
+var PIN_ADMIN='1234', PIN_SBLOCCO='2026';
+var SKEY='hdc-v9-c', vKey=function(g){return 'hdc-v9-v-'+g.replace(/ /g,'-').toLowerCase();};
+
+// STATE
+var mode='login', giudice=null, concorrenti=[], voti={}, allVoti={};
+var currentIdx=null, currentScores={}, filtroGiudice='Tutti', filtroG='Tutti', filtroT='Tutti';
+var selGenere=GENERI[0], selTipo=TIPI[0], selCat=CAT_GRUPPO[0];
+var fromScreen='giudice', pinTarget=null, pinVerified=false;
+var syncTimer=null;
+
+// STORAGE (localStorage)
+function lsGet(k){try{var v=localStorage.getItem(k);return v?JSON.parse(v):null;}catch(e){return null;}}
+function lsSet(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}}
+
+function syncLoad(){
+  var c=lsGet(SKEY); if(c) concorrenti=c;
+  if(giudice){var v=lsGet(vKey(giudice)); if(v) voti=v;}
+  allVoti={};
+  GIUDICI.forEach(function(jn){var jv=lsGet(vKey(jn)); if(jv) allVoti[jn]=jv;});
+  renderCurrent();
+  updateSyncLabel();
+}
+function syncSave(){
+  lsSet(SKEY,concorrenti);
+  if(giudice) lsSet(vKey(giudice),voti);
+  allVoti={};
+  GIUDICI.forEach(function(jn){var jv=lsGet(vKey(jn)); if(jv) allVoti[jn]=jv;});
+  updateSyncLabel();
+}
+function updateSyncLabel(){
+  var t=new Date().toLocaleTimeString('it-IT',{hour:'2-digit',minute:'2-digit'});
+  var gs=document.getElementById('g-sync'); if(gs) gs.textContent='✓ '+t;
+  var os=document.getElementById('o-sync'); if(os) os.textContent='✓ '+t;
+  var gc=document.getElementById('g-counts'); if(gc) gc.textContent=Object.keys(voti).length+' votati';
+  var oc=document.getElementById('o-counts'); if(oc) oc.textContent=concorrenti.length+' part.';
+}
+
+function getGT(idx){
+  var t=0;
+  GIUDICI.forEach(function(jn){var jv=allVoti[jn]; if(jv&&jv[idx]&&jv[idx].scores) Object.values(jv[idx].scores).forEach(function(s){t+=s;});});
+  return t;
+}
+function calcTot(scores){
+  return CATEGORIE.reduce(function(s,c){return s+(scores[c.id]||0);},0);
+}
+
+// SCREENS
+function showScreen(name){
+  document.querySelectorAll('.screen').forEach(function(s){s.classList.remove('active');});
+  document.getElementById('screen-'+name).classList.add('active');
+  window.scrollTo(0,0);
+}
+function renderCurrent(){
+  if(mode==='giudice') renderGiudice();
+  else if(mode==='organizzatore') renderOrganizzatore();
+}
+
+// LOGIN
+function initLogin(){
+  var list=document.getElementById('judge-list');
+  list.innerHTML='';
+  GIUDICI.forEach(function(g,i){
+    var btn=document.createElement('button');
+    btn.className='judge-btn';
+    var ico=document.createElement('div'); ico.className='judge-ico'; ico.textContent=i===2?'👨‍⚖️':'👩‍⚖️';
+    var info=document.createElement('div');
+    var nm=document.createElement('div'); nm.className='judge-nm'; nm.textContent=g;
+    var rl=document.createElement('div'); rl.className='judge-rl'; rl.textContent='GIUDICE';
+    info.appendChild(nm); info.appendChild(rl);
+    var arr=document.createElement('div'); arr.className='judge-arr'; arr.textContent='›';
+    btn.appendChild(ico); btn.appendChild(info); btn.appendChild(arr);
+    btn.onclick=function(){loginAs(g);};
+    list.appendChild(btn);
+  });
+  document.getElementById('admin-btn').onclick=function(){
+    document.getElementById('admin-pin-input').value='';
+    document.getElementById('admin-pin-err').style.display='none';
+    document.getElementById('modal-admin').style.display='flex';
+    setTimeout(function(){document.getElementById('admin-pin-input').focus();},100);
+  };
+  document.getElementById('admin-modal-cancel').onclick=function(){document.getElementById('modal-admin').style.display='none';};
+  document.getElementById('admin-modal-ok').onclick=tryAdmin;
+  document.getElementById('admin-pin-input').onkeydown=function(e){if(e.key==='Enter')tryAdmin();};
+}
+
+function tryAdmin(){
+  var pin=document.getElementById('admin-pin-input').value;
+  if(pin===PIN_ADMIN){
+    document.getElementById('modal-admin').style.display='none';
+    mode='organizzatore'; giudice=null; voti={}; syncLoad();
+    document.getElementById('o-logout').onclick=function(){doLogout();};
+    initOrganizzatore();
+    showScreen('organizzatore');
+    if(syncTimer) clearInterval(syncTimer);
+    syncTimer=setInterval(syncLoad,8000);
+  } else {
+    document.getElementById('admin-pin-err').style.display='block';
+    document.getElementById('admin-pin-input').value='';
+  }
+}
+
+function loginAs(g){
+  mode='giudice'; giudice=g; voti={};
+  syncLoad();
+  document.getElementById('g-judge-name').textContent='⚖️ '+g;
+  document.getElementById('g-logout').onclick=function(){doLogout();};
+  document.getElementById('g-classifica').onclick=function(){fromScreen='giudice';renderClassifica();showScreen('classifica');};
+  document.getElementById('class-back').onclick=function(){showScreen('screen-'+fromScreen==='giudice'?'giudice':'organizzatore');};
+  initGiudiceTabs();
+  renderGiudice();
+  showScreen('giudice');
+  if(syncTimer) clearInterval(syncTimer);
+  syncTimer=setInterval(syncLoad,8000);
+}
+
+function doLogout(){
+  mode='login'; giudice=null; voti={}; allVoti={};
+  if(syncTimer) clearInterval(syncTimer);
+  showScreen('login');
+}
+
+// GIUDICE TABS
+function initGiudiceTabs(){
+  var tabs=document.getElementById('g-tabs');
+  tabs.innerHTML='';
+  // Tutti tab
+  var td=makeTuttiTab();
+  tabs.appendChild(td);
+  GENERI.forEach(function(g){
+    var tab=makeGenreTab(g,true);
+    tabs.appendChild(tab);
+  });
+}
+
+function makeTuttiTab(){
+  var td=document.createElement('div');
+  td.className='tab';
+  td.setAttribute('data-g','Tutti');
+  td.onclick=function(){filtroGiudice='Tutti';updateGiudiceTabs();renderGiudice();};
+  updateTuttiTabContent(td);
+  return td;
+}
+function updateTuttiTabContent(td){
+  var cnt=concorrenti.filter(function(c){return !c.blocked;}).length;
+  var val=concorrenti.filter(function(c,i){return !c.blocked&&voti[i];}).length;
+  var active=filtroGiudice==='Tutti';
+  td.style.background=active?'white':'rgba(255,255,255,.08)';
+  td.style.borderBottom='3px solid white';
+  td.innerHTML='<div class="tab-name" style="color:'+(active?'#1e1b4b':'white')+'">TUTTI</div>'+
+    '<div class="tab-count" style="color:'+(active?'#1e1b4b':'white')+'">'+cnt+'</div>'+
+    '<div class="tab-val" style="color:'+(active?'#6b7280':'rgba(255,255,255,.4)')+'">'+val+' val.</div>';
+}
+function makeGenreTab(g,isGiudice){
+  var col=COLORS[g];
+  var td=document.createElement('div');
+  td.className='tab';
+  td.setAttribute('data-g',g);
+  if(isGiudice){
+    td.onclick=function(){filtroGiudice=g;updateGiudiceTabs();renderGiudice();};
+  }
+  updateGenreTabContent(td,g,isGiudice);
+  return td;
+}
+function updateGenreTabContent(td,g,isGiudice){
+  var col=COLORS[g];
+  var cnt=isGiudice?concorrenti.filter(function(c){return c.genere===g&&!c.blocked;}).length:concorrenti.filter(function(c){return c.genere===g;}).length;
+  var active=isGiudice?(filtroGiudice===g):false;
+  td.style.background=active?'white':'rgba(255,255,255,.08)';
+  td.style.borderBottom='3px solid '+(active?'white':col.accent);
+  var nm=g.length>8?g.substring(0,8)+'…':g;
+  td.innerHTML='<div class="tab-name" style="color:'+(active?col.accent:'white')+'">'+nm+'</div>'+
+    '<div class="tab-count" style="color:'+(active?col.accent:col.tab)+'">'+cnt+'</div>';
+  if(isGiudice){
+    var val=concorrenti.filter(function(c,i){return c.genere===g&&!c.blocked&&voti[i];}).length;
+    td.innerHTML+='<div class="tab-val" style="color:'+(active?'#6b7280':'rgba(255,255,255,.4)')+'">'+val+' val.</div>';
+  }
+}
+function updateGiudiceTabs(){
+  var tabs=document.getElementById('g-tabs');
+  if(!tabs) return;
+  tabs.querySelectorAll('[data-g]').forEach(function(td){
+    var g=td.getAttribute('data-g');
+    if(g==='Tutti') updateTuttiTabContent(td);
+    else updateGenreTabContent(td,g,true);
+  });
+}
+
+// RENDER GIUDICE LIST
+function renderGiudice(){
+  updateGiudiceTabs();
+  var list=document.getElementById('g-list');
+  if(!list) return;
+  list.innerHTML='';
+  var visible=concorrenti.filter(function(c){return !c.blocked;});
+  if(!visible.length){
+    list.innerHTML='<div class="empty"><div style="font-size:44px;margin-bottom:12px">⏳</div>In attesa dei partecipanti dall\'organizzatore...</div>';
+    document.getElementById('g-classifica').style.display='none';
+    return;
+  }
+  var hasVotes=Object.keys(voti).length>0;
+  document.getElementById('g-classifica').style.display=hasVotes?'block':'none';
+
+  GENERI.forEach(function(genere){
+    if(filtroGiudice!=='Tutti'&&filtroGiudice!==genere) return;
+    var col=COLORS[genere];
+    var items=concorrenti.map(function(c,i){return {c:c,idx:i};}).filter(function(x){return x.c.genere===genere&&!x.c.blocked;});
+    if(!items.length) return;
+    var sec=document.createElement('div'); sec.className='genre-sec';
+    var hdr=document.createElement('div'); hdr.className='genre-hdr';
+    var bar=document.createElement('div'); bar.className='genre-bar'; bar.style.background=col.accent;
+    var lbl=document.createElement('div'); lbl.className='genre-lbl'; lbl.style.color=col.accent; lbl.textContent=genere;
+    var flex=document.createElement('div'); flex.className='genre-flex'; flex.style.background=col.light;
+    hdr.appendChild(bar); hdr.appendChild(lbl); hdr.appendChild(flex);
+    sec.appendChild(hdr);
+    items.forEach(function(item){
+      sec.appendChild(makeParticipantCard(item.c,item.idx,col,false));
+    });
+    list.appendChild(sec);
+  });
+  document.getElementById('g-counts').textContent=Object.keys(voti).length+' votati';
+}
+
+function makeParticipantCard(c,idx,col,isAdmin){
+  var voted=!!voti[idx];
+  var myTot=voted?calcTot(voti[idx].scores):null;
+  var gt=getGT(idx);
+  var card=document.createElement('div');
+  card.className='pcard';
+  card.style.borderLeftColor=c.blocked?'#fca5a5':col.accent;
+  card.style.opacity=c.blocked?'0.65':'1';
+  card.style.background=c.blocked?'#f9fafb':'white';
+
+  var info=document.createElement('div'); info.style.flex='1'; info.style.minWidth='0';
+  var nm=document.createElement('div'); nm.className='pname'; nm.textContent=c.nome;
+  var meta=document.createElement('div'); meta.className='pmeta';
+
+  // Genre badge
+  var bg=makeBdg(c.genere,col.light,col.accent); meta.appendChild(bg);
+  // Tipo badge
+  var bt=makeBdg(TIPO_ICO[c.tipo]+' '+c.tipo,'#f3f4f6','#6b7280'); meta.appendChild(bt);
+  // Cat badge
+  if(c.catGruppo){ meta.appendChild(makeBdg(c.catGruppo,'#fef3c7','#92400e')); }
+  // Blocked badge (admin only)
+  if(isAdmin&&c.blocked){ meta.appendChild(makeBdg('🔒 Bloccato','#fee2e2','#ef4444')); }
+  // My vote
+  if(!isAdmin&&voted){ meta.appendChild(makeBdg('✓ '+myTot.toFixed(1),'transparent','#059669')); }
+  // Grand total
+  if(gt>0){ meta.appendChild(makeBdg('Σ '+gt.toFixed(1),'transparent','#7c3aed')); }
+
+  info.appendChild(nm); info.appendChild(meta);
+  card.appendChild(info);
+
+  if(isAdmin){
+    // Block/unblock button only
+    var bbtn=document.createElement('button');
+    bbtn.style.cssText='background:none;border:1.5px solid '+(c.blocked?'#ef4444':'#e5e7eb')+';border-radius:8px;color:'+(c.blocked?'#ef4444':'#9ca3af')+';font-size:14px;padding:5px 8px;flex-shrink:0;cursor:pointer;';
+    bbtn.textContent=c.blocked?'🔒':'🔓';
+    bbtn.title=c.blocked?'Sblocca/Elimina':'Blocca';
+    (function(i,blocked){
+      bbtn.onclick=function(){
+        if(!blocked){ doBlock(i); }
+        else { openPinModal(i); }
+      };
+    })(idx,c.blocked);
+    card.appendChild(bbtn);
+  } else {
+    // Vote button
+    var vbtn=document.createElement('button');
+    vbtn.className='bdg'; // reuse for sizing
+    vbtn.style.cssText='background:'+(c.blocked?'#f3f4f6':(voted?col.light:col.accent))+';color:'+(c.blocked?'#9ca3af':(voted?col.accent:'white'))+';border:2px solid '+(c.blocked?'#e5e7eb':col.accent)+';border-radius:8px;padding:7px 11px;font-weight:700;font-size:12px;cursor:'+(c.blocked?'not-allowed':'pointer')+';flex-shrink:0;font-family:Lato,sans-serif;';
+    vbtn.textContent=c.blocked?'🔒':(voted?'✏️ Modifica':'⭐ Vota');
+    if(!c.blocked){
+      (function(i){vbtn.onclick=function(){openVote(i);};})(idx);
+    }
+    card.appendChild(vbtn);
+  }
+  return card;
+}
+
+function makeBdg(text,bg,color){
+  var s=document.createElement('span'); s.className='bdg';
+  s.style.background=bg; s.style.color=color; s.textContent=text;
+  return s;
+}
+
+// VOTE
+function openVote(i){
+  currentIdx=i;
+  var c=concorrenti[i];
+  var col=COLORS[c.genere];
+  currentScores={};
+  if(voti[i]&&voti[i].scores){ Object.keys(voti[i].scores).forEach(function(k){currentScores[k]=voti[i].scores[k];}); }
+  else { CATEGORIE.forEach(function(cat){currentScores[cat.id]=1;}); }
+
+  // Style header
+  var hdr=document.getElementById('vote-hdr');
+  hdr.style.background='linear-gradient(135deg,'+col.dark+','+col.accent+')';
+  document.getElementById('vote-sub').textContent=TIPO_ICO[c.tipo]+' '+c.tipo+(c.catGruppo?' · '+c.catGruppo:'')+' · '+c.genere;
+  document.getElementById('vote-nm').textContent=c.nome;
+  document.getElementById('vote-notes').value=voti[i]?voti[i].note||'':'';
+  document.getElementById('btn-save').style.background='linear-gradient(135deg,'+col.dark+','+col.accent+')';
+
+  // Slider thumb color
+  var styleEl=document.getElementById('slider-style');
+  if(!styleEl){styleEl=document.createElement('style');styleEl.id='slider-style';document.head.appendChild(styleEl);}
+  styleEl.textContent='.slider-range::-webkit-slider-thumb{-webkit-appearance:none;width:22px;height:22px;border-radius:50%;margin-top:-8px;cursor:pointer;background:'+col.accent+';}';
+
+  renderJudgesBox(i,col);
+  renderCatCards(col);
+  updateVoteTot();
+
+  document.getElementById('vote-back').onclick=function(){showScreen(mode==='giudice'?'giudice':'organizzatore');renderCurrent();};
+  document.getElementById('btn-save').onclick=saveVote;
+  showScreen('vote');
+}
+
+function renderJudgesBox(idx,col){
+  var box=document.getElementById('judges-box');
+  box.innerHTML='<div class="judges-lbl">📊 Voti tutti i giudici</div>';
+  var gt=0;
+  GIUDICI.forEach(function(jn){
+    var jv=allVoti[jn];
+    var js=jv&&jv[idx]&&jv[idx].scores?calcTot(jv[idx].scores):0;
+    gt+=js;
+    var pct=js>0?(js/50*100):0;
+    var isMe=jn===giudice;
+    var row=document.createElement('div'); row.className='judge-row';
+    var nm=document.createElement('span'); nm.className='judge-row-nm';
+    nm.style.color=isMe?'#1d4ed8':'#374151'; nm.style.fontWeight=isMe?'700':'600';
+    nm.textContent=jn+(isMe?' ✎':'');
+    var bw=document.createElement('div'); bw.className='judge-row-bar-wrap';
+    var bf=document.createElement('div'); bf.className='judge-row-bar';
+    bf.style.width=pct+'%'; bf.style.background=isMe?'#1d4ed8':'#7c3aed';
+    bw.appendChild(bf);
+    var sc=document.createElement('span'); sc.className='judge-row-score';
+    sc.style.color=isMe?'#1d4ed8':'#7c3aed'; sc.textContent=js>0?js.toFixed(1):'—';
+    row.appendChild(nm); row.appendChild(bw); row.appendChild(sc);
+    box.appendChild(row);
+  });
+  var tot=document.createElement('div'); tot.className='grand-total-row';
+  tot.innerHTML='<span class="grand-total-lbl">Totale Cumulativo</span><span class="grand-total-num">'+gt.toFixed(1)+'</span>';
+  box.appendChild(tot);
+}
+
+function renderCatCards(col){
+  var cards=document.getElementById('cat-cards');
+  cards.innerHTML='';
+  CATEGORIE.forEach(function(cat){
+    var val=currentScores[cat.id]||1;
+    var card=document.createElement('div'); card.className='cat-card';
+    var top=document.createElement('div'); top.className='cat-top';
+    var lbl=document.createElement('span'); lbl.className='cat-lbl'; lbl.textContent=cat.label;
+    var sc=document.createElement('span'); sc.className='cat-sc'; sc.id='sc-lbl-'+cat.id;
+    sc.style.color=col.accent; sc.textContent=val.toFixed(1)+' / '+cat.max;
+    top.appendChild(lbl); top.appendChild(sc);
+    var row=document.createElement('div'); row.className='srow';
+    var slider=document.createElement('input');
+    slider.type='range'; slider.min=1; slider.max=cat.max; slider.step=0.5; slider.value=val;
+    slider.className='slider-range';
+    slider.style.accentColor=col.accent;
+    (function(catId,catMax){
+      slider.oninput=function(){updateScore(catId,parseFloat(this.value));};
+    })(cat.id,cat.max);
+    var num=document.createElement('input');
+    num.type='number'; num.min=1; num.max=cat.max; num.step=0.5; num.value=val;
+    num.className='snum'; num.id='sc-num-'+cat.id;
+    num.style.borderColor=col.accent; num.style.color=col.accent;
+    (function(catId,catMax){
+      num.oninput=function(){var v=parseFloat(this.value);if(!isNaN(v)&&v>=1&&v<=catMax){updateScore(catId,v);}};
+    })(cat.id,cat.max);
+    var mx=document.createElement('span'); mx.className='smax'; mx.textContent='/'+cat.max;
+    row.appendChild(slider); row.appendChild(num); row.appendChild(mx);
+    card.appendChild(top); card.appendChild(row);
+    cards.appendChild(card);
+  });
+}
+
+function updateScore(catId,val){
+  currentScores[catId]=val;
+  var lbl=document.getElementById('sc-lbl-'+catId); if(lbl) lbl.textContent=val.toFixed(1)+' / 10';
+  var num=document.getElementById('sc-num-'+catId); if(num) num.value=val;
+  updateVoteTot();
+}
+function updateVoteTot(){
+  var tot=0; for(var k in currentScores) tot+=currentScores[k];
+  var el=document.getElementById('vote-tot'); if(el) el.textContent=tot.toFixed(1);
+}
+function saveVote(){
+  var scores={}; for(var k in currentScores) scores[k]=currentScores[k];
+  voti[currentIdx]={scores:scores,note:document.getElementById('vote-notes').value};
+  syncSave();
+  showScreen(mode==='giudice'?'giudice':'organizzatore');
+  renderCurrent();
+}
+
+// ORGANIZZATORE
+function initOrganizzatore(){
+  // Genre selector
+  var gs=document.getElementById('o-genre-sel'); gs.innerHTML='';
+  GENERI.forEach(function(g){
+    var col=COLORS[g];
+    var b=document.createElement('button'); b.className='btg';
+    b.setAttribute('data-og',g); b.textContent=g.length>12?g.substring(0,12)+'…':g;
+    b.onclick=function(){selGenere=g;updateOGenreSel();};
+    gs.appendChild(b);
+  });
+  // Tipo selector
+  var ts=document.getElementById('o-tipo-sel'); ts.innerHTML='';
+  TIPI.forEach(function(t){
+    var b=document.createElement('button'); b.className='btg';
+    b.setAttribute('data-ot',t); b.textContent=TIPO_ICO[t]+' '+t;
+    b.onclick=function(){selTipo=t;updateOTipoSel();};
+    ts.appendChild(b);
+  });
+  // Cat selector
+  var cs=document.getElementById('o-cat-sel'); cs.innerHTML='';
+  CAT_GRUPPO.forEach(function(cat){
+    var b=document.createElement('button'); b.className='btg';
+    b.setAttribute('data-oc',cat); b.textContent=cat;
+    b.onclick=function(){selCat=cat;updateOCatSel();};
+    cs.appendChild(b);
+  });
+  updateOGenreSel(); updateOTipoSel(); updateOCatSel();
+  document.getElementById('o-new-name').onkeydown=function(e){if(e.key==='Enter')doAggiungi();};
+  document.getElementById('o-add-btn').onclick=doAggiungi;
+  document.getElementById('o-classifica').onclick=function(){fromScreen='organizzatore';renderClassifica();showScreen('classifica');document.getElementById('class-back').onclick=function(){showScreen('organizzatore');};};
+  renderOrganizzatore();
+}
+
+function updateOGenreSel(){
+  document.querySelectorAll('[data-og]').forEach(function(b){
+    var g=b.getAttribute('data-og'); var col=COLORS[g];
+    if(g===selGenere){b.style.borderColor=col.accent;b.style.background=col.light;b.style.color=col.accent;}
+    else{b.style.borderColor='#e5e7eb';b.style.background='white';b.style.color='#9ca3af';}
+  });
+}
+function updateOTipoSel(){
+  document.querySelectorAll('[data-ot]').forEach(function(b){
+    var t=b.getAttribute('data-ot');
+    if(t===selTipo){b.style.borderColor='#92400e';b.style.background='#fef3c7';b.style.color='#92400e';}
+    else{b.style.borderColor='#e5e7eb';b.style.background='white';b.style.color='#9ca3af';}
+  });
+  document.getElementById('o-cat-wrap').style.display=selTipo==='Gruppo'?'block':'none';
+}
+function updateOCatSel(){
+  document.querySelectorAll('[data-oc]').forEach(function(b){
+    var c=b.getAttribute('data-oc');
+    if(c===selCat){b.style.borderColor='#7c3aed';b.style.background='#ede9fe';b.style.color='#7c3aed';}
+    else{b.style.borderColor='#e5e7eb';b.style.background='white';b.style.color='#9ca3af';}
+  });
+}
+
+function doAggiungi(){
+  var name=document.getElementById('o-new-name').value.trim();
+  if(!name) return;
+  concorrenti.push({nome:name,tipo:selTipo,genere:selGenere,catGruppo:selTipo==='Gruppo'?selCat:null,blocked:false});
+  document.getElementById('o-new-name').value='';
+  syncSave(); renderOrganizzatore();
+}
+
+function doBlock(i){
+  concorrenti[i].blocked=true; syncSave(); renderOrganizzatore();
+}
+
+function openPinModal(i){
+  pinTarget=i; pinVerified=false;
+  renderPinModal();
+  document.getElementById('modal-pin').style.display='flex';
+}
+function closePinModal(){
+  document.getElementById('modal-pin').style.display='none';
+  pinTarget=null; pinVerified=false;
+}
+function renderPinModal(){
+  var box=document.getElementById('modal-pin-box');
+  if(!pinVerified){
+    box.innerHTML='<div class="modal-icon">🔐</div>'+
+      '<div class="modal-title">Codice di Accesso</div>'+
+      '<div class="modal-sub">Inserisci il codice per continuare</div>'+
+      '<input type="password" inputmode="numeric" maxlength="4" id="pin-input-field" placeholder="••••" class="pin-input"/>'+
+      '<div id="pin-err" class="pin-error" style="display:none">❌ Codice errato. Riprova.</div>'+
+      '<div class="btn-row">'+
+        '<button class="btn-cancel" id="pin-cancel">Annulla</button>'+
+        '<button class="btn-confirm" id="pin-ok">Conferma →</button>'+
+      '</div>';
+    document.getElementById('pin-cancel').onclick=closePinModal;
+    document.getElementById('pin-ok').onclick=confirmPin;
+    document.getElementById('pin-input-field').onkeydown=function(e){if(e.key==='Enter')confirmPin();};
+    setTimeout(function(){var f=document.getElementById('pin-input-field');if(f)f.focus();},100);
+  } else {
+    var nome=pinTarget!==null&&concorrenti[pinTarget]?concorrenti[pinTarget].nome:'';
+    box.innerHTML='<div class="modal-icon">✅</div>'+
+      '<div class="modal-title">Codice corretto!</div>'+
+      '<div class="modal-sub"><strong>'+nome+'</strong><br/>Cosa vuoi fare?</div>'+
+      '<button class="btn-green" id="pin-unblock">🔓 Sblocca partecipante</button>'+
+      '<button class="btn-red" id="pin-delete">🗑️ Elimina partecipante</button>'+
+      '<button class="btn-cancel" id="pin-cancel2" style="width:100%">Annulla</button>';
+    document.getElementById('pin-unblock').onclick=doUnblock;
+    document.getElementById('pin-delete').onclick=doElimina;
+    document.getElementById('pin-cancel2').onclick=closePinModal;
+  }
+}
+function confirmPin(){
+  var val=document.getElementById('pin-input-field').value;
+  if(val===PIN_SBLOCCO){pinVerified=true;renderPinModal();}
+  else{document.getElementById('pin-err').style.display='block';document.getElementById('pin-input-field').value='';}
+}
+function doUnblock(){
+  if(pinTarget!==null) concorrenti[pinTarget].blocked=false;
+  syncSave(); closePinModal(); renderOrganizzatore();
+}
+function doElimina(){
+  if(pinTarget===null) return;
+  var i=pinTarget;
+  concorrenti.splice(i,1);
+  var nv={};
+  concorrenti.forEach(function(_,ni){var old=ni>=i?ni+1:ni; if(voti[old]) nv[ni]=voti[old];});
+  voti=nv; syncSave(); closePinModal(); renderOrganizzatore();
+}
+
+function renderOrganizzatore(){
+  // Tabs
+  var tabs=document.getElementById('o-tabs'); tabs.innerHTML='';
+  GENERI.forEach(function(g){
+    var col=COLORS[g];
+    var cnt=concorrenti.filter(function(c){return c.genere===g;}).length;
+    var tab=document.createElement('div'); tab.className='tab';
+    tab.style.background='rgba(255,255,255,.1)';
+    tab.style.borderBottom='3px solid '+col.accent;
+    var nm=g.length>8?g.substring(0,8)+'…':g;
+    tab.innerHTML='<div class="tab-name" style="color:white">'+nm+'</div><div class="tab-count" style="color:white">'+cnt+'</div>';
+    tabs.appendChild(tab);
+  });
+  // List
+  var list=document.getElementById('o-list'); list.innerHTML='';
+  if(!concorrenti.length){
+    list.innerHTML='<div class="empty"><div style="font-size:44px;margin-bottom:10px">📋</div>Nessun partecipante ancora.</div>';
+    return;
+  }
+  GENERI.forEach(function(genere){
+    var col=COLORS[genere];
+    var items=concorrenti.map(function(c,i){return {c:c,idx:i};}).filter(function(x){return x.c.genere===genere;});
+    if(!items.length) return;
+    var sec=document.createElement('div'); sec.className='genre-sec';
+    var hdr=document.createElement('div'); hdr.className='genre-hdr';
+    var bar=document.createElement('div'); bar.className='genre-bar'; bar.style.background=col.accent;
+    var lbl=document.createElement('div'); lbl.className='genre-lbl'; lbl.style.color=col.accent; lbl.textContent=genere;
+    var flex=document.createElement('div'); flex.className='genre-flex'; flex.style.background=col.light;
+    hdr.appendChild(bar); hdr.appendChild(lbl); hdr.appendChild(flex); sec.appendChild(hdr);
+    items.forEach(function(item){
+      sec.appendChild(makeParticipantCard(item.c,item.idx,col,true));
+    });
+    list.appendChild(sec);
+  });
+  document.getElementById('o-counts').textContent=concorrenti.length+' part.';
+}
+
+// CLASSIFICA
+function renderClassifica(){
+  // Filters
+  var fg=document.getElementById('class-fg'); fg.innerHTML='';
+  ['Tutti'].concat(GENERI).forEach(function(g){
+    var b=document.createElement('button');
+    b.className='fbtn '+(filtroG===g?'fbtn-on':'fbtn-off');
+    b.textContent=g;
+    b.onclick=function(){filtroG=g;renderClassifica();};
+    fg.appendChild(b);
+  });
+  var ft=document.getElementById('class-ft'); ft.innerHTML='';
+  ['Tutti'].concat(TIPI).forEach(function(t){
+    var b=document.createElement('button');
+    b.className='fbtn '+(filtroT===t?'fbtn-on':'fbtn-off');
+    b.textContent=t;
+    b.onclick=function(){filtroT=t;renderClassifica();};
+    ft.appendChild(b);
+  });
+
+  var items=concorrenti.map(function(c,i){
+    return {c:c,idx:i,totale:voti[i]?calcTot(voti[i].scores):null,gt:getGT(i)};
+  }).filter(function(x){
+    return (filtroG==='Tutti'||x.c.genere===filtroG)&&(filtroT==='Tutti'||x.c.tipo===filtroT);
+  }).sort(function(a,b){return (b.gt||-1)-(a.gt||-1);});
+
+  var body=document.getElementById('class-body'); body.innerHTML='';
+  if(!items.length){body.innerHTML='<div class="no-results">Nessun risultato</div>';return;}
+
+  items.forEach(function(item,rank){
+    var c=item.c; var col=COLORS[c.genere];
+    var nonVal=item.gt===0&&item.totale===null;
+    var pct=item.gt>0?(item.gt/(50*GIUDICI.length)*100):0;
+    var barColor=pct>=80?'#f59e0b':pct>=60?'#3b82f6':'#ef4444';
+    var medalBg=rank===0?'#f59e0b':rank===1?'#9ca3af':rank===2?'#b45309':'#e5e7eb';
+    var medalColor=rank<3?'white':'#6b7280';
+    var medals=['🥇','🥈','🥉'];
+
+    var card=document.createElement('div');
+    card.className='rank-card '+(nonVal?'rank-empty':'rank-voted')+(rank===0&&!nonVal?' rank-gold':'');
+
+    var row=document.createElement('div'); row.className='rank-row';
+    var medal=document.createElement('div'); medal.className='rank-medal';
+    medal.style.background=medalBg; medal.style.color=medalColor; medal.style.fontSize=rank<3?'18px':'13px';
+    medal.textContent=rank<3?medals[rank]:(rank+1);
+
+    var info=document.createElement('div'); info.className='rank-info';
+    var nm=document.createElement('div'); nm.className='rank-nm'; nm.style.color=nonVal?'white':'#111827'; nm.textContent=c.nome;
+    var bdgs=document.createElement('div'); bdgs.className='rank-bdgs';
+    bdgs.appendChild(makeBdg(c.genere,col.light,col.accent));
+    bdgs.appendChild(makeBdg(TIPO_ICO[c.tipo]+' '+c.tipo,'#f3f4f6','#6b7280'));
+    if(c.catGruppo) bdgs.appendChild(makeBdg(c.catGruppo,'#fef3c7','#92400e'));
+    info.appendChild(nm); info.appendChild(bdgs);
+
+    var sc=document.createElement('div'); sc.className='rank-sc';
+    if(nonVal){var nd=document.createElement('span');nd.style.color='rgba(255,255,255,.3)';nd.style.fontSize='12px';nd.textContent='—';sc.appendChild(nd);}
+    else{
+      var sn=document.createElement('div');sn.className='rank-sc-num';sn.style.color='#7c3aed';sn.textContent=item.gt.toFixed(1);
+      var sl=document.createElement('div');sl.className='rank-sc-lbl';sl.textContent='Σ totale';
+      sc.appendChild(sn);sc.appendChild(sl);
+    }
+    row.appendChild(medal);row.appendChild(info);row.appendChild(sc);
+    card.appendChild(row);
+
+    if(!nonVal&&item.gt>0){
+      var pw=document.createElement('div');pw.className='prog-wrap';
+      var pb=document.createElement('div');pb.className='prog-bg';
+      var pf=document.createElement('div');pf.className='prog-fill';pf.style.width=pct+'%';pf.style.background=barColor;
+      pb.appendChild(pf);
+      var ps=document.createElement('span');ps.className='prog-sc';ps.style.color=barColor;ps.textContent=item.gt.toFixed(1);
+      pw.appendChild(pb);pw.appendChild(ps);
+      card.appendChild(pw);
+
+      var jbs=document.createElement('div');jbs.className='jdg-bdgs';
+      GIUDICI.forEach(function(jn){
+        var jv=allVoti[jn];var js=jv&&jv[item.idx]?calcTot(jv[item.idx].scores):0;
+        if(js>0){var jb=makeBdg(jn.split(' ')[0]+': '+js.toFixed(1),'#f3f4f6','#374151');jbs.appendChild(jb);}
+      });
+      card.appendChild(jbs);
+    }
+    body.appendChild(card);
+  });
+}
+
+// INIT
+initLogin();
+showScreen('login');
+</script>
+</body>
+</html>
