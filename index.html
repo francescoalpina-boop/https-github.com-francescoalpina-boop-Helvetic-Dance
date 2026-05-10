@@ -360,38 +360,40 @@ function syncLoad(){
   fbGet('concorrenti', function(c){
     if(c) concorrenti=c;
     var pending=GIUDICI.length;
-    allVoti={};
-    if(giudice){
-      fbGet('voti/'+giudice.replace(/ /g,'-').toLowerCase(), function(v){
-        if(v) voti=v;
-        GIUDICI.forEach(function(jn){
-          fbGet('voti/'+jn.replace(/ /g,'-').toLowerCase(), function(jv){
-            if(jv) allVoti[jn]=jv;
-            pending--;
-            if(pending===0){renderCurrent();updateSyncLabel();}
-          });
-        });
+    var newAllVoti={};
+    // Load ALL judges votes at once
+    GIUDICI.forEach(function(jn){
+      fbGet('voti/'+jn.replace(/ /g,'-').toLowerCase(), function(jv){
+        if(jv) newAllVoti[jn]=jv;
+        // For current judge, also use local voti (most up to date)
+        if(jn===giudice){
+          if(jv) voti=jv;
+          newAllVoti[giudice]=voti;
+        }
+        pending--;
+        if(pending===0){
+          allVoti=newAllVoti;
+          renderCurrent();
+          updateSyncLabel();
+        }
       });
-    } else {
-      GIUDICI.forEach(function(jn){
-        fbGet('voti/'+jn.replace(/ /g,'-').toLowerCase(), function(jv){
-          if(jv) allVoti[jn]=jv;
-          pending--;
-          if(pending===0){renderCurrent();updateSyncLabel();}
-        });
-      });
-    }
+    });
   });
 }
 function syncSave(){
+  // Immediately update allVoti with current judge's votes
+  if(giudice) allVoti[giudice] = voti;
+
   fbSet('concorrenti', concorrenti, function(){
     if(giudice){
       fbSet('voti/'+giudice.replace(/ /g,'-').toLowerCase(), voti, function(){
-        allVoti={};
+        // Reload ALL judges votes from Firebase
         var pending=GIUDICI.length;
         GIUDICI.forEach(function(jn){
           fbGet('voti/'+jn.replace(/ /g,'-').toLowerCase(), function(jv){
             if(jv) allVoti[jn]=jv;
+            // Make sure current judge always has latest local voti
+            if(jn===giudice) allVoti[giudice]=voti;
             pending--;
             if(pending===0){updateSyncLabel();renderCurrent();}
           });
