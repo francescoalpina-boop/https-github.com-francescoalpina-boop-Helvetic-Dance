@@ -305,6 +305,23 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:22px;heigh
 </div>
 
 <script>
+// Firebase config
+var FB_URL = "https://helvetic-dance-default-rtdb.firebaseio.com";
+
+function fbGet(path, cb) {
+  fetch(FB_URL + "/" + path + ".json")
+    .then(function(r){return r.json();})
+    .then(function(data){cb(data||null);})
+    .catch(function(){cb(null);});
+}
+function fbSet(path, data, cb) {
+  fetch(FB_URL + "/" + path + ".json", {
+    method: "PUT",
+    headers: {"Content-Type":"application/json"},
+    body: JSON.stringify(data)
+  }).then(function(){if(cb)cb();}).catch(function(){if(cb)cb();});
+}
+
 var GENERI = ['Classico','Contemporaneo','Moderno','Hip Hop','Urban Dance Mix Style'];
 var TIPI   = ['Assolo','Passo a Due','Gruppo'];
 var CAT_GRUPPO = ['Young','Junior','Senior'];
@@ -339,19 +356,52 @@ function lsGet(k){try{var v=localStorage.getItem(k);return v?JSON.parse(v):null;
 function lsSet(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}}
 
 function syncLoad(){
-  var c=lsGet(SKEY); if(c) concorrenti=c;
-  if(giudice){var v=lsGet(vKey(giudice)); if(v) voti=v;}
-  allVoti={};
-  GIUDICI.forEach(function(jn){var jv=lsGet(vKey(jn)); if(jv) allVoti[jn]=jv;});
-  renderCurrent();
-  updateSyncLabel();
+  fbGet('concorrenti', function(c){
+    if(c) concorrenti=c;
+    var pending=GIUDICI.length;
+    allVoti={};
+    if(giudice){
+      fbGet('voti/'+giudice.replace(/ /g,'-').toLowerCase(), function(v){
+        if(v) voti=v;
+        GIUDICI.forEach(function(jn){
+          fbGet('voti/'+jn.replace(/ /g,'-').toLowerCase(), function(jv){
+            if(jv) allVoti[jn]=jv;
+            pending--;
+            if(pending===0){renderCurrent();updateSyncLabel();}
+          });
+        });
+      });
+    } else {
+      GIUDICI.forEach(function(jn){
+        fbGet('voti/'+jn.replace(/ /g,'-').toLowerCase(), function(jv){
+          if(jv) allVoti[jn]=jv;
+          pending--;
+          if(pending===0){renderCurrent();updateSyncLabel();}
+        });
+      });
+    }
+  });
 }
 function syncSave(){
-  lsSet(SKEY,concorrenti);
-  if(giudice) lsSet(vKey(giudice),voti);
-  allVoti={};
-  GIUDICI.forEach(function(jn){var jv=lsGet(vKey(jn)); if(jv) allVoti[jn]=jv;});
-  updateSyncLabel();
+  fbSet('concorrenti', concorrenti, function(){
+    if(giudice){
+      fbSet('voti/'+giudice.replace(/ /g,'-').toLowerCase(), voti, function(){
+        allVoti={};
+        var pending=GIUDICI.length;
+        GIUDICI.forEach(function(jn){
+          fbGet('voti/'+jn.replace(/ /g,'-').toLowerCase(), function(jv){
+            if(jv) allVoti[jn]=jv;
+            pending--;
+            if(pending===0){updateSyncLabel();renderCurrent();}
+          });
+        });
+      });
+    } else {
+      fbSet('concorrenti', concorrenti, function(){
+        updateSyncLabel();renderCurrent();
+      });
+    }
+  });
 }
 function updateSyncLabel(){
   var t=new Date().toLocaleTimeString('it-IT',{hour:'2-digit',minute:'2-digit'});
