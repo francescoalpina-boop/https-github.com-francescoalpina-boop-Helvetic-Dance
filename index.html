@@ -191,6 +191,11 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:22px;heigh
 </div>
 
 <!-- GIUDICE MAIN -->
+<!-- OFFLINE BANNER -->
+<div id="offline-banner" style="display:none;position:fixed;top:0;left:0;right:0;background:linear-gradient(135deg,#991b1b,#ef4444);color:white;text-align:center;padding:8px;font-size:12px;font-weight:700;z-index:9998;letter-spacing:1px;">
+  📵 NESSUNA CONNESSIONE — I voti vengono salvati localmente e si sincronizzeranno automaticamente
+</div>
+
 <div id="screen-giudice" class="screen">
   <div class="main-hdr" style="background:linear-gradient(135deg,#1e1b4b 0%,#1e3a5f 100%)">
     <div class="hdr-top">
@@ -267,6 +272,7 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:22px;heigh
       </div>
       <div style="text-align:right;font-size:10px;opacity:.7;">
         <div id="o-sync"></div>
+        <div class="conn-status" style="font-size:10px;font-weight:600;">🟢 Online</div>
         <div id="o-counts"></div>
         <button style="background:rgba(255,255,255,.2);border:none;color:white;border-radius:6px;padding:3px 8px;font-size:10px;cursor:pointer;margin-top:3px;" id="o-logout">ESCI</button>
       </div>
@@ -391,6 +397,45 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:22px;heigh
 // Firebase config
 var FB_URL = "https://helvetic-dance-default-rtdb.firebaseio.com";
 
+// ── CONNESSIONE E OFFLINE ──────────────────────────────────────────
+var isOnline = navigator.onLine;
+var pendingSave = false;
+
+window.addEventListener('online', function(){
+  isOnline = true;
+  updateConnectionStatus();
+  // Sync any pending local saves to Firebase
+  if(pendingSave){
+    pendingSave = false;
+    syncLocalToFirebase();
+  }
+});
+window.addEventListener('offline', function(){
+  isOnline = false;
+  updateConnectionStatus();
+});
+
+function updateConnectionStatus(){
+  var els = document.querySelectorAll('.conn-status');
+  els.forEach(function(el){
+    el.textContent = isOnline ? '🟢 Online' : '🔴 Offline';
+    el.style.color = isOnline ? '#4ade80' : '#f87171';
+  });
+  var banner = document.getElementById('offline-banner');
+  if(banner) banner.style.display = isOnline ? 'none' : 'block';
+}
+
+function syncLocalToFirebase(){
+  // Push local data to Firebase when back online
+  var localC = lsGet('hdc-local-concorrenti');
+  var localV = lsGet('hdc-local-voti-'+(giudice||''));
+  if(localC) fbSet('concorrenti', localC, function(){});
+  if(localV && giudice) fbSet('voti/'+giudice.replace(/ /g,'-').toLowerCase(), localV, function(){});
+}
+
+// Local storage backup
+// lsGet/lsSet defined above
+
 // Load config from Firebase
 function loadConfig(cb){
   fbGet('config', function(c){
@@ -419,17 +464,42 @@ function saveConfig(cb){
 }
 
 function fbGet(path, cb) {
+  if(!isOnline){
+    // Use local cache when offline
+    var local = lsGet('hdc-local-'+path.replace(/\//g,'-'));
+    cb(local || null);
+    return;
+  }
   fetch(FB_URL + "/" + path + ".json")
     .then(function(r){return r.json();})
-    .then(function(data){cb(data||null);})
-    .catch(function(){cb(null);});
+    .then(function(data){
+      // Cache locally
+      if(data) lsSet('hdc-local-'+path.replace(/\//g,'-'), data);
+      cb(data||null);
+    })
+    .catch(function(){
+      // Fallback to local cache
+      var local = lsGet('hdc-local-'+path.replace(/\//g,'-'));
+      cb(local || null);
+    });
 }
 function fbSet(path, data, cb) {
+  // Always save locally first
+  lsSet('hdc-local-'+path.replace(/\//g,'-'), data);
+  
+  if(!isOnline){
+    pendingSave = true;
+    if(cb) cb();
+    return;
+  }
   fetch(FB_URL + "/" + path + ".json", {
     method: "PUT",
     headers: {"Content-Type":"application/json"},
     body: JSON.stringify(data)
-  }).then(function(){if(cb)cb();}).catch(function(){if(cb)cb();});
+  }).then(function(){if(cb)cb();}).catch(function(){
+    pendingSave = true;
+    if(cb) cb();
+  });
 }
 
 var GENERI = ['Classico','Contemporaneo','Moderno','Hip Hop','Urban Dance Mix Style'];
