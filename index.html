@@ -329,6 +329,8 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:22px;heigh
       <button id="s-add-giudice" style="background:linear-gradient(135deg,#166534,#15803d);color:white;border:none;border-radius:10px;padding:10px 14px;font-weight:700;font-size:14px;cursor:pointer;">+</button>
     </div>
 
+    <div style="font-size:11px;color:#9ca3af;letter-spacing:1px;text-transform:uppercase;margin-bottom:8px">🎨 Tema Colori Schermata Login</div>
+    <div id="s-tema-grid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:16px;"></div>
     <button id="s-save" style="width:100%;background:linear-gradient(135deg,#92400e,#b45309);color:white;border:none;border-radius:12px;padding:14px;font-size:15px;font-weight:700;cursor:pointer;">💾 Salva tutto</button>
   </div>
 </div>
@@ -399,6 +401,7 @@ function loadConfig(cb){
       if(c.data) eventConfig.data=c.data;
       if(c.giudici && c.giudici.length) GIUDICI=c.giudici;
       if(c.giudiciPin) Object.assign(GIUDICI_PIN, c.giudiciPin);
+      if(c.tema) { temaCorrente=c.tema; setTimeout(function(){applicaTema(c.tema);},100); }
     }
     if(cb) cb();
   });
@@ -410,7 +413,8 @@ function saveConfig(cb){
     edizione: eventConfig.edizione,
     data: eventConfig.data,
     giudici: GIUDICI,
-    giudiciPin: GIUDICI_PIN
+    giudiciPin: GIUDICI_PIN,
+    tema: temaCorrente
   }, cb);
 }
 
@@ -432,6 +436,45 @@ var GENERI = ['Classico','Contemporaneo','Moderno','Hip Hop','Urban Dance Mix St
 var TIPI   = ['Assolo','Passo a Due','Gruppo'];
 var CAT_GRUPPO = ['Young','Junior','Senior'];
 var TIPO_ICO = {Assolo:'🕺','Passo a Due':'👯',Gruppo:'🎭'};
+// TEMI COLORI
+var TEMI = {
+  'Verde Notte':   {bg1:'#000000',bg2:'#0a1a0a',bg3:'#0d1f0d',accent:'rgba(34,197,94,.15)',star:'#4ade80',badge_bg:'linear-gradient(135deg,#14532d,#15803d)',badge_border:'rgba(74,222,128,.5)',badge_text:'#4ade80',sep:'rgba(74,222,128,.3)',btn_border:'rgba(74,222,128,.22)',btn_active:'rgba(74,222,128,.1)'},
+  'Blu Notte':     {bg1:'#000510',bg2:'#0a0f2a',bg3:'#0d1540',accent:'rgba(59,130,246,.15)',star:'#60a5fa',badge_bg:'linear-gradient(135deg,#1e3a8a,#1d4ed8)',badge_border:'rgba(96,165,250,.5)',badge_text:'#60a5fa',sep:'rgba(96,165,250,.3)',btn_border:'rgba(96,165,250,.22)',btn_active:'rgba(96,165,250,.1)'},
+  'Rosso Fuoco':   {bg1:'#0a0000',bg2:'#1a0505',bg3:'#200808',accent:'rgba(239,68,68,.15)',star:'#f87171',badge_bg:'linear-gradient(135deg,#7f1d1d,#dc2626)',badge_border:'rgba(248,113,113,.5)',badge_text:'#f87171',sep:'rgba(248,113,113,.3)',btn_border:'rgba(248,113,113,.22)',btn_active:'rgba(248,113,113,.1)'},
+  'Viola Reale':   {bg1:'#05000a',bg2:'#120520',bg3:'#180828',accent:'rgba(139,92,246,.15)',star:'#a78bfa',badge_bg:'linear-gradient(135deg,#4c1d95,#7c3aed)',badge_border:'rgba(167,139,250,.5)',badge_text:'#a78bfa',sep:'rgba(167,139,250,.3)',btn_border:'rgba(167,139,250,.22)',btn_active:'rgba(167,139,250,.1)'},
+  'Oro Elegante':  {bg1:'#0a0800',bg2:'#1a1200',bg3:'#201800',accent:'rgba(245,158,11,.15)',star:'#fbbf24',badge_bg:'linear-gradient(135deg,#78350f,#d97706)',badge_border:'rgba(251,191,36,.5)',badge_text:'#fbbf24',sep:'rgba(251,191,36,.3)',btn_border:'rgba(251,191,36,.22)',btn_active:'rgba(251,191,36,.1)'},
+  'Rosa Glamour':  {bg1:'#0a0008',bg2:'#1a0015',bg3:'#200018',accent:'rgba(236,72,153,.15)',star:'#f472b6',badge_bg:'linear-gradient(135deg,#831843,#db2777)',badge_border:'rgba(244,114,182,.5)',badge_text:'#f472b6',sep:'rgba(244,114,182,.3)',btn_border:'rgba(244,114,182,.22)',btn_active:'rgba(244,114,182,.1)'},
+};
+var temaCorrente = 'Verde Notte';
+
+function applicaTema(nome){
+  var t = TEMI[nome] || TEMI['Verde Notte'];
+  temaCorrente = nome;
+  var login = document.getElementById('screen-login');
+  if(!login) return;
+  login.style.background = 'linear-gradient(180deg,'+t.bg1+' 0%,'+t.bg2+' 40%,'+t.bg3+' 100%)';
+  var glow = login.querySelector('.glow');
+  if(glow) glow.style.background = 'radial-gradient(circle,'+t.accent+' 0%,transparent 70%)';
+  var star = login.querySelector('.login-star');
+  if(star) star.style.color = t.star;
+  var badge = login.querySelector('.login-badge');
+  if(badge){badge.style.background=t.badge_bg;badge.style.borderColor=t.badge_border;}
+  var badgeSpan = login.querySelector('.login-badge span');
+  if(badgeSpan) badgeSpan.style.color = t.badge_text;
+  var seps = login.querySelectorAll('.login-sep,.login-sep2');
+  seps.forEach(function(s){s.style.background='linear-gradient(90deg,transparent,'+t.sep+',transparent)';});
+  var dlLeft = login.querySelector('.dl-l');
+  if(dlLeft) dlLeft.style.background='linear-gradient(90deg,transparent,'+t.star+')';
+  var dlRight = login.querySelector('.dl-r');
+  if(dlRight) dlRight.style.background='linear-gradient(90deg,'+t.star+',transparent)';
+  var judgebts = login.querySelectorAll('.judge-btn');
+  judgebts.forEach(function(b){b.style.borderColor=t.btn_border;});
+  var adminbt = login.querySelector('.admin-btn');
+  if(adminbt) adminbt.style.borderColor=t.btn_border;
+  // Save to eventConfig
+  eventConfig.tema = nome;
+}
+
 var TIPO_COLORS = {
   Assolo:      {accent:'#7c3aed',light:'#ede9fe'},
   'Passo a Due':{accent:'#0891b2',light:'#cffafe'},
@@ -593,6 +636,7 @@ function confirmJudgePin(){
 }
 
 function refreshLoginLabels(){
+  setTimeout(function(){applicaTema(temaCorrente);},50);
   var t1=document.getElementById('login-t1'); if(t1) t1.textContent=eventConfig.nomeEvento;
   var t2=document.getElementById('login-t2'); if(t2) t2.textContent=eventConfig.sottotitolo;
   var ed=document.getElementById('login-edizione'); if(ed) ed.textContent=eventConfig.edizione;
@@ -1285,6 +1329,25 @@ function openSettings(){
   document.getElementById('s-edizione').value = eventConfig.edizione;
   document.getElementById('s-data').value = eventConfig.data;
   renderGiudiciList();
+  // Render tema grid
+  var tgrid = document.getElementById('s-tema-grid');
+  if(tgrid){
+    tgrid.innerHTML='';
+    Object.keys(TEMI).forEach(function(nome){
+      var t=TEMI[nome];
+      var btn=document.createElement('button');
+      btn.style.cssText='border:3px solid '+(nome===temaCorrente?t.star:'transparent')+';border-radius:10px;padding:8px 4px;cursor:pointer;background:linear-gradient(135deg,'+t.bg1+','+t.bg2+');color:'+t.star+';font-size:10px;font-weight:700;text-align:center;min-height:50px;';
+      btn.textContent=nome;
+      btn.onclick=function(){
+        temaCorrente=nome;
+        applicaTema(nome);
+        // Update borders
+        tgrid.querySelectorAll('button').forEach(function(b){b.style.borderColor='transparent';});
+        btn.style.borderColor=t.star;
+      };
+      tgrid.appendChild(btn);
+    });
+  }
   document.getElementById('modal-settings').style.display='block';
 }
 function closeSettings(){
