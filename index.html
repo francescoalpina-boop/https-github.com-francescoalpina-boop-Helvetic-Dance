@@ -197,7 +197,7 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:22px;heigh
       <span style="font-size:9px;color:rgba(255,255,255,.5);letter-spacing:1px;">INSTAGRAM</span>
     </a>
     <!-- Facebook -->
-    <a href="https://facebook.com/helveticdancecompetition" target="_blank" style="display:flex;flex-direction:column;align-items:center;gap:4px;text-decoration:none;">
+    <a href="https://www.facebook.com/share/1FntNcJnRn/?mibextid=wwXIfr" target="_blank" target="_blank" style="display:flex;flex-direction:column;align-items:center;gap:4px;text-decoration:none;">
       <div style="width:44px;height:44px;border-radius:12px;background:#1877f2;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 12px rgba(24,119,242,.4);">
         <svg width="22" height="22" viewBox="0 0 24 24" fill="white"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
       </div>
@@ -1639,7 +1639,8 @@ function shareVincitore(platform){
     navigator.clipboard && navigator.clipboard.writeText(text).then(function(){
       alert('✅ Testo copiato! Aprendo la pagina Facebook...');
     });
-    window.open('https://www.facebook.com/helveticdancecompetition','_blank');
+    // Try app first, fallback to browser
+    window.open('https://www.facebook.com/share/1FntNcJnRn/?mibextid=wwXIfr', '_blank');
   } else if(platform==='instagram'){
     navigator.clipboard && navigator.clipboard.writeText(text).then(function(){
       alert('✅ Testo copiato! Aprendo Instagram...\nIncolla nella descrizione del post o nelle stories.');
