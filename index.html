@@ -1636,8 +1636,10 @@ function shareVincitore(platform){
     navigator.clipboard && navigator.clipboard.writeText(text);
     alert('Testo copiato! Incollalo nel canale WhatsApp.');
   } else if(platform==='facebook'){
-    var fbText = encodeURIComponent(text);
-    window.open('https://www.facebook.com/sharer/sharer.php?u='+encodeURIComponent('https://www.helvetic-dance-competition.com')+'&quote='+fbText,'_blank');
+    navigator.clipboard && navigator.clipboard.writeText(text).then(function(){
+      alert('✅ Testo copiato! Aprendo la pagina Facebook...');
+    });
+    window.open('https://www.facebook.com/helveticdancecompetition','_blank');
   } else if(platform==='instagram'){
     navigator.clipboard && navigator.clipboard.writeText(text).then(function(){
       alert('✅ Testo copiato! Aprendo Instagram...\nIncolla nella descrizione del post o nelle stories.');
