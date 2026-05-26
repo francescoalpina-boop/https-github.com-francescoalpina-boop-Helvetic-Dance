@@ -276,8 +276,9 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:22px;heigh
       </div>
       <div class="hdr-sync">
         <div id="g-sync"></div>
+        <div class="conn-status" style="font-size:10px;font-weight:600;color:#4ade80;">🟢 Online</div>
         <div id="g-counts"></div>
-        <button class="hdr-exit" style="background:rgba(255,255,255,.15)" id="g-logout">ESCI</button>
+        <button onclick="showSondaggio()" style="background:rgba(255,255,255,.15);border:none;color:white;border-radius:6px;padding:3px 8px;font-size:10px;cursor:pointer;margin-top:3px;">ESCI</button>
       </div>
     </div>
     <div class="tabs" id="g-tabs"></div>
@@ -360,7 +361,7 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:22px;heigh
         <div class="btn-grid" id="o-genre-sel"></div>
         <div class="slbl">Tipo</div>
         <div class="btn-row2" id="o-tipo-sel"></div>
-        <div id="o-cat-wrap" style="display:none">
+        <div id="o-cat-wrap">
           <div class="slbl">Categoria</div>
           <div class="btn-row2" id="o-cat-sel"></div>
         </div>
@@ -1025,7 +1026,7 @@ function loginAs(g){
   syncLoad();
   setTimeout(function(){showWelcome(g);}, 500);
   document.getElementById('g-judge-name').textContent='⚖️ '+g;
-  document.getElementById('g-logout').onclick=function(){showSondaggio();};
+
   document.getElementById('g-classifica').onclick=function(){fromScreen='giudice';renderClassifica();showScreen('classifica');};
   document.getElementById('class-back').onclick=function(){showScreen('screen-'+fromScreen==='giudice'?'giudice':'organizzatore');};
   initGiudiceTabs();
@@ -1038,7 +1039,8 @@ function loginAs(g){
 function doLogout(){
   mode='login'; giudice=null; voti={}; allVoti={};
   if(syncTimer) clearInterval(syncTimer);
-  showScreen('login');
+  // Reload page to reset everything cleanly
+  window.location.reload();
 }
 
 // GIUDICE TABS
@@ -1115,31 +1117,55 @@ function renderGiudice(){
   list.innerHTML='';
   var visible=concorrenti.filter(function(c){return !c.blocked;});
   if(!visible.length){
-    list.innerHTML='<div class="empty"><div style="font-size:44px;margin-bottom:12px">⏳</div>In attesa dei partecipanti dall\'organizzatore...</div>';
+    list.innerHTML='<div class="empty"><div style="font-size:44px;margin-bottom:12px">⏳</div>In attesa dei partecipanti...</div>';
     document.getElementById('g-classifica').style.display='none';
     return;
   }
   var hasVotes=Object.keys(voti).length>0;
   document.getElementById('g-classifica').style.display=hasVotes?'block':'none';
 
-  GENERI.forEach(function(genere){
-    if(filtroGiudice!=='Tutti'&&filtroGiudice!==genere) return;
-    var col=COLORS[genere];
-    var items=concorrenti.map(function(c,i){return {c:c,idx:i};}).filter(function(x){return x.c.genere===genere&&!x.c.blocked;});
-    if(!items.length) return;
-    var sec=document.createElement('div'); sec.className='genre-sec';
-    var hdr=document.createElement('div'); hdr.className='genre-hdr';
-    var bar=document.createElement('div'); bar.className='genre-bar'; bar.style.background=col.accent;
-    var lbl=document.createElement('div'); lbl.className='genre-lbl'; lbl.style.color=col.accent; lbl.textContent=genere;
-    var flex=document.createElement('div'); flex.className='genre-flex'; flex.style.background=col.light;
-    hdr.appendChild(bar); hdr.appendChild(lbl); hdr.appendChild(flex);
-    sec.appendChild(hdr);
-    items.forEach(function(item){
-      sec.appendChild(makeParticipantCard(item.c,item.idx,col,false));
-    });
-    list.appendChild(sec);
+  // Split into Da Votare and Votati
+  var daVotare=[], votati=[];
+  concorrenti.forEach(function(c,i){
+    if(c.blocked) return;
+    if(filtroGiudice!=='Tutti'&&filtroGiudice!==c.genere) return;
+    if(voti[i]) votati.push({c:c,idx:i});
+    else daVotare.push({c:c,idx:i});
   });
-  document.getElementById('g-counts').textContent=Object.keys(voti).length+' votati';
+
+  // DA VOTARE section
+  if(daVotare.length>0){
+    var sec1=document.createElement('div');
+    sec1.style.marginBottom='8px';
+    var h1=document.createElement('div');
+    h1.style.cssText='display:flex;align-items:center;gap:8px;margin-bottom:10px;margin-top:4px;';
+    h1.innerHTML='<div style="height:3px;width:22px;border-radius:99px;background:#ef4444;"></div>'+
+      '<span style="font-weight:700;font-size:13px;text-transform:uppercase;letter-spacing:1px;color:#ef4444;">&#9203; Da Votare ('+daVotare.length+')</span>'+
+      '<div style="height:3px;flex:1;border-radius:99px;background:#fee2e2;"></div>';
+    sec1.appendChild(h1);
+    daVotare.forEach(function(item){
+      sec1.appendChild(makeParticipantCard(item.c,item.idx,COLORS[item.c.genere],false));
+    });
+    list.appendChild(sec1);
+  }
+
+  // VOTATI section
+  if(votati.length>0){
+    var sec2=document.createElement('div');
+    sec2.style.marginTop=daVotare.length>0?'16px':'4px';
+    var h2=document.createElement('div');
+    h2.style.cssText='display:flex;align-items:center;gap:8px;margin-bottom:10px;';
+    h2.innerHTML='<div style="height:3px;width:22px;border-radius:99px;background:#059669;"></div>'+
+      '<span style="font-weight:700;font-size:13px;text-transform:uppercase;letter-spacing:1px;color:#059669;">&#10003; Votati ('+votati.length+')</span>'+
+      '<div style="height:3px;flex:1;border-radius:99px;background:#d1fae5;"></div>';
+    sec2.appendChild(h2);
+    votati.forEach(function(item){
+      sec2.appendChild(makeParticipantCard(item.c,item.idx,COLORS[item.c.genere],false));
+    });
+    list.appendChild(sec2);
+  }
+
+  document.getElementById('g-counts').textContent=Object.keys(voti).length+'/'+visible.length+' votati';
 }
 
 function makeParticipantCard(c,idx,col,isAdmin){
@@ -1335,8 +1361,24 @@ function saveVote(){
   var scores={}; for(var k in currentScores) scores[k]=currentScores[k];
   voti[currentIdx]={scores:scores,note:document.getElementById('vote-notes').value};
   syncSave();
-  showScreen(mode==='giudice'?'giudice':'organizzatore');
-  renderCurrent();
+  if(mode==='giudice'){
+    // Find next unvoted participant
+    var next=-1;
+    for(var i=currentIdx+1;i<concorrenti.length;i++){
+      if(!concorrenti[i].blocked&&!voti[i]){next=i;break;}
+    }
+    if(next>=0){
+      // Go to next unvoted
+      openVote(next);
+    } else {
+      // All voted - show list with summary
+      showScreen('giudice');
+      renderGiudice();
+    }
+  } else {
+    showScreen('organizzatore');
+    renderCurrent();
+  }
 }
 
 // ORGANIZZATORE
@@ -1404,7 +1446,7 @@ function updateOTipoSel(){
     if(t===selTipo){b.style.borderColor='#92400e';b.style.background='#fef3c7';b.style.color='#92400e';}
     else{b.style.borderColor='#e5e7eb';b.style.background='white';b.style.color='#9ca3af';}
   });
-  document.getElementById('o-cat-wrap').style.display=selTipo==='Gruppo'?'block':'none';
+  document.getElementById('o-cat-wrap').style.display='block';
 }
 function updateOCatSel(){
   document.querySelectorAll('[data-oc]').forEach(function(b){
@@ -1434,7 +1476,7 @@ function doAggiungi(){
   var name=document.getElementById('o-new-name').value.trim();
   if(!name) return;
   var nextNum = concorrenti.length + 1;
-  concorrenti.push({nome:name,tipo:selTipo,genere:selGenere,catGruppo:selTipo==='Gruppo'?selCat:null,blocked:false,numero:nextNum});
+  concorrenti.push({nome:name,tipo:selTipo,genere:selGenere,catGruppo:selCat,blocked:false,numero:nextNum});
   document.getElementById('o-new-name').value='';
   syncSave(); renderOrganizzatore();
 }
@@ -1776,31 +1818,19 @@ function exportPDF(){
 var premGroups=[], premGroupIdx=0, premItemIdx=0;
 
 function buildPremGroups(){
-  // Build groups: per discipline > tipo > categoria
   var groups=[];
   GENERI.forEach(function(genere){
     TIPI.forEach(function(tipo){
-      if(tipo==='Gruppo'){
-        CAT_GRUPPO.forEach(function(cat){
-          var items=concorrenti.map(function(c,i){
-            var gt=0;
-            GIUDICI.forEach(function(jn){var jv=allVoti[jn];if(jv&&jv[i]&&jv[i].scores) Object.values(jv[i].scores).forEach(function(s){gt+=s;});});
-            return {c:c,idx:i,gt:gt};
-          }).filter(function(x){
-            return !x.c.blocked&&x.gt>0&&x.c.genere===genere&&x.c.tipo===tipo&&x.c.catGruppo===cat;
-          }).sort(function(a,b){return b.gt-a.gt;}); // descending
-          if(items.length>0) groups.push({label:genere+' · '+tipo+' · '+cat, genere:genere, tipo:tipo, cat:cat, items:items});
-        });
-      } else {
+      CAT_GRUPPO.forEach(function(cat){
         var items=concorrenti.map(function(c,i){
           var gt=0;
           GIUDICI.forEach(function(jn){var jv=allVoti[jn];if(jv&&jv[i]&&jv[i].scores) Object.values(jv[i].scores).forEach(function(s){gt+=s;});});
           return {c:c,idx:i,gt:gt};
         }).filter(function(x){
-          return !x.c.blocked&&x.gt>0&&x.c.genere===genere&&x.c.tipo===tipo;
+          return !x.c.blocked&&x.gt>0&&x.c.genere===genere&&x.c.tipo===tipo&&x.c.catGruppo===cat;
         }).sort(function(a,b){return b.gt-a.gt;});
-        if(items.length>0) groups.push({label:genere+' · '+tipo, genere:genere, tipo:tipo, cat:null, items:items});
-      }
+        if(items.length>0) groups.push({label:genere+' · '+tipo+' · '+cat,genere:genere,tipo:tipo,cat:cat,items:items});
+      });
     });
   });
   return groups;
@@ -2046,6 +2076,21 @@ function showWelcome(g){
 }
 function closeWelcome(){
   document.getElementById('modal-welcome').style.display='none';
+  // Auto-open first unvoted participant
+  autoOpenFirst();
+}
+
+function autoOpenFirst(){
+  // Find first unvoted non-blocked participant
+  for(var i=0;i<concorrenti.length;i++){
+    if(!concorrenti[i].blocked && !voti[i]){
+      openVote(i);
+      return;
+    }
+  }
+  // All voted - show list
+  showScreen('giudice');
+  renderGiudice();
 }
 
 function showSondaggio(){
@@ -2126,6 +2171,12 @@ function viewSondaggi(){
     });
   });
 }
+
+// Block browser back button for judges
+window.history.pushState(null, '', window.location.href);
+window.addEventListener('popstate', function(){
+  window.history.pushState(null, '', window.location.href);
+});
 
 // INIT - load config first then show login
 loadConfig(function(){
