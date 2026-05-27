@@ -1023,6 +1023,8 @@ function tryAdmin(){
 
 function loginAs(g){
   mode='giudice'; giudice=g; voti={}; allVoti={};
+  showScreen('giudice');
+  renderGiudice();
   syncLoad();
   setTimeout(function(){showWelcome(g);}, 500);
   document.getElementById('g-judge-name').textContent='⚖️ '+g;
