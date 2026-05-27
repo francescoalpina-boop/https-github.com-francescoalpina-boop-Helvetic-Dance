@@ -471,7 +471,7 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:22px;heigh
     </div>
     <div class="modal-title" id="judge-pin-title">Accesso Giudice</div>
     <div class="modal-sub" id="judge-pin-sub">Inserisci il tuo nome per entrare</div>
-    <input type="text" maxlength="10" id="judge-pin-input" placeholder="Scrivi il tuo nome..."
+    <input type="text" maxlength="10" id="judge-pin-input" placeholder="Scrivi il tuo cognome..."
       style="width:100%;text-align:center;border:2px solid #e5e7eb;border-radius:12px;padding:12px;font-size:22px;font-weight:700;letter-spacing:1px;outline:none;margin-bottom:14px;box-sizing:border-box;text-transform:uppercase;font-family:Lato,sans-serif;font-size:16px;"/>
     <div id="judge-pin-err" class="pin-error" style="display:none">❌ Codice errato. Riprova.</div>
     <div class="btn-row">
@@ -619,7 +619,7 @@ var TRADUZIONI = {
     accessoRiservato:'Accesso Riservato',
     giudice:'Giudice',
     toccaEntrare:'Tocca per entrare',
-    inserisciNome:'Inserisci il tuo nome per entrare',
+    inserisciNome:'Inserisci il tuo cognome per entrare',
     scriviNome:'Scrivi il tuo nome...',
     codiceErrato:'❌ Codice errato. Riprova.',
     annulla:'Annulla',
@@ -657,7 +657,7 @@ var TRADUZIONI = {
     accessoRiservato:'Reserved Access',
     giudice:'Judge',
     toccaEntrare:'Tap to enter',
-    inserisciNome:'Enter your name to access',
+    inserisciNome:'Enter your surname to access',
     scriviNome:'Write your name...',
     codiceErrato:'❌ Wrong code. Try again.',
     annulla:'Cancel',
@@ -695,7 +695,7 @@ var TRADUZIONI = {
     accessoRiservato:'Reservierter Zugang',
     giudice:'Richter',
     toccaEntrare:'Tippen zum Eintreten',
-    inserisciNome:'Gib deinen Namen ein',
+    inserisciNome:'Gib deinen Nachnamen ein',
     scriviNome:'Deinen Namen eingeben...',
     codiceErrato:'❌ Falscher Code. Erneut versuchen.',
     annulla:'Abbrechen',
@@ -733,7 +733,7 @@ var TRADUZIONI = {
     accessoRiservato:'Accès Réservé',
     giudice:'Juge',
     toccaEntrare:'Appuyez pour entrer',
-    inserisciNome:'Entrez votre nom pour accéder',
+    inserisciNome:"Entrez votre nom de famille pour accéder",
     scriviNome:'Écrivez votre nom...',
     codiceErrato:'❌ Code incorrect. Réessayez.',
     annulla:'Annuler',
@@ -842,12 +842,12 @@ var CAT_COLORS = {
   Junior: {accent:'#1d4ed8',light:'#dbeafe'},
   Senior: {accent:'#be185d',light:'#fce7f3'}
 };
-var GIUDICI  = ['Mia Molinari','Betty Staly','Davide Cauli',"Elena D'Amario"];
+var GIUDICI  = ['Mia Molinari','Betty Style','Davide Cauli',"Elena D'Amario"];
 var GIUDICI_PIN = {
-  'Mia Molinari': 'MIA',
-  'Betty Staly':  'BETTY',
-  'Davide Cauli': 'DAVIDE',
-  "Elena D'Amario": 'ELENA'
+  'Mia Molinari': 'MOLINARI',
+  'Betty Style':  'STYLE',
+  'Davide Cauli': 'CAULI',
+  "Elena D'Amario": 'DAMARIO'
 };
 
 // Event config (loaded from Firebase, editable by organizer)
@@ -986,10 +986,19 @@ function openJudgePin(g){
   document.getElementById('modal-judge-pin').style.display = 'flex';
   setTimeout(function(){document.getElementById('judge-pin-input').focus();}, 100);
 }
+function getSurname(fullName){
+  // Extract surname (last word of name)
+  var parts = fullName.trim().split(' ');
+  return parts[parts.length-1].toUpperCase().replace(/'/g,'');
+}
+
 function confirmJudgePin(){
-  var val = document.getElementById('judge-pin-input').value.trim().toUpperCase();
-  var expected = GIUDICI_PIN[pendingJudge] ? GIUDICI_PIN[pendingJudge].toUpperCase() : '';
-  if(val === expected){
+  var val = document.getElementById('judge-pin-input').value.trim().toUpperCase().replace(/'/g,'');
+  // Compare against surname extracted from judge name
+  var expected = getSurname(pendingJudge);
+  // Also check GIUDICI_PIN as fallback
+  var pinAlt = GIUDICI_PIN[pendingJudge] ? GIUDICI_PIN[pendingJudge].toUpperCase() : '';
+  if(val === expected || val === pinAlt){
     document.getElementById('modal-judge-pin').style.display = 'none';
     loginAs(pendingJudge);
     pendingJudge = null;
