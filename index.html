@@ -352,7 +352,10 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:22px;heigh
   <div class="main-wrap" style="background:linear-gradient(160deg,#fff8f0 0%,#fffbf0 100%)">
     <div class="main-inner">
       <!-- Settings button - big and visible -->
-      <button id="o-settings-btn" style="width:100%;background:linear-gradient(135deg,#1e1b4b,#1e3a5f);color:white;border:none;border-radius:14px;padding:14px;font-size:15px;font-weight:700;cursor:pointer;margin-bottom:10px;letter-spacing:1px;">⚙️ IMPOSTAZIONI EVENTO E GIUDICI</button>
+      <div style="display:flex;gap:8px;margin-bottom:10px;">
+        <button id="o-settings-btn" style="flex:3;background:linear-gradient(135deg,#1e1b4b,#1e3a5f);color:white;border:none;border-radius:14px;padding:14px;font-size:14px;font-weight:700;cursor:pointer;letter-spacing:1px;">⚙️ IMPOSTAZIONI</button>
+        <button onclick="openQR()" style="flex:1;background:linear-gradient(135deg,#15803d,#166534);color:white;border:none;border-radius:14px;padding:14px;font-size:20px;font-weight:700;cursor:pointer;">▦</button>
+      </div>
       <button onclick="resetAll()" style="width:100%;background:linear-gradient(135deg,#991b1b,#ef4444);color:white;border:none;border-radius:14px;padding:13px;font-size:14px;font-weight:700;cursor:pointer;margin-bottom:14px;letter-spacing:1px;">🗑️ RESET TOTALE PARTECIPANTI E VOTI</button>
       <div class="add-form" style="border:2px solid #fde68a">
         <div class="add-title" style="color:#92400e">➕ Aggiungi partecipante</div>
@@ -412,6 +415,22 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:22px;heigh
       <button onclick="resetSondaggi()" style="flex:1;background:linear-gradient(135deg,#7f1d1d,#dc2626);color:white;border:none;border-radius:12px;padding:11px 8px;font-size:12px;font-weight:700;cursor:pointer;">🗑️ Reset Valutazioni</button>
     </div>
     <button id="s-save" style="width:100%;background:linear-gradient(135deg,#92400e,#b45309);color:white;border:none;border-radius:12px;padding:14px;font-size:15px;font-weight:700;cursor:pointer;">💾 Salva tutto</button>
+  </div>
+</div>
+
+<!-- QR CODE MODAL -->
+<div id="modal-qr" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.9);z-index:9999;display:none;align-items:center;justify-content:center;padding:20px;">
+  <div style="background:white;border-radius:20px;padding:28px 24px;width:100%;max-width:320px;text-align:center;">
+    <div style="font-family:Playfair Display,serif;font-size:20px;font-weight:700;color:#111827;margin-bottom:4px;">📱 QR Code App</div>
+    <div style="font-size:13px;color:#6b7280;margin-bottom:16px;">I giudici scansionano per accedere</div>
+    <div id="qr-container" style="display:flex;justify-content:center;margin-bottom:16px;">
+      <img id="qr-img" src="" style="width:200px;height:200px;border-radius:12px;border:3px solid #e5e7eb;" alt="QR Code"/>
+    </div>
+    <div style="background:#f9fafb;border-radius:10px;padding:10px;margin-bottom:16px;">
+      <div style="font-size:10px;color:#9ca3af;margin-bottom:4px;">Link app</div>
+      <div style="font-size:11px;color:#374151;word-break:break-all;" id="qr-url"></div>
+    </div>
+    <button onclick="document.getElementById('modal-qr').style.display='none'" style="width:100%;background:linear-gradient(135deg,#1e1b4b,#1e3a5f);color:white;border:none;border-radius:12px;padding:13px;font-size:14px;font-weight:700;cursor:pointer;">✓ Chiudi</button>
   </div>
 </div>
 
@@ -1466,6 +1485,13 @@ function updateOCatSel(){
     if(c===selCat){b.style.borderColor='#7c3aed';b.style.background='#ede9fe';b.style.color='#7c3aed';}
     else{b.style.borderColor='#e5e7eb';b.style.background='white';b.style.color='#9ca3af';}
   });
+}
+
+function openQR(){
+  var url = window.location.href.split('?')[0];
+  document.getElementById('qr-url').textContent = url;
+  document.getElementById('qr-img').src = 'https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=' + encodeURIComponent(url) + '&bgcolor=ffffff&color=1e1b4b&margin=10';
+  document.getElementById('modal-qr').style.display='flex';
 }
 
 function resetAll(){
