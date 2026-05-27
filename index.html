@@ -2248,16 +2248,19 @@ function skipSondaggio(){
 
 function resetSondaggi(){
   if(!confirm('Eliminare tutte le valutazioni dei giudici?')) return;
-  var pending = GIUDICI.length;
-  GIUDICI.forEach(function(jn){
-    fetch(FB_URL+'/sondaggi/'+jn.replace(/ /g,'-').toLowerCase()+'.json', {method:'DELETE'})
-      .then(function(){
-        pending--;
-        if(pending===0) alert('✅ Valutazioni eliminate!');
-      }).catch(function(){
-        pending--;
-        if(pending===0) alert('✅ Reset completato!');
-      });
+  // Reset the entire sondaggi node
+  fetch(FB_URL+'/sondaggi.json', {
+    method:'PUT',
+    headers:{'Content-Type':'application/json'},
+    body:'null'
+  }).then(function(r){
+    if(r.ok){
+      alert('✅ Valutazioni eliminate!');
+    } else {
+      alert('❌ Errore nel reset. Riprova.');
+    }
+  }).catch(function(){
+    alert('❌ Errore di connessione.');
   });
 }
 
