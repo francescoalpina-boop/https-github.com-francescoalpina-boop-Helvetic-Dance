@@ -370,7 +370,11 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:22px;heigh
       </div>
       <button onclick="resetAll()" style="width:100%;background:linear-gradient(135deg,#991b1b,#ef4444);color:white;border:none;border-radius:14px;padding:13px;font-size:14px;font-weight:700;cursor:pointer;margin-bottom:14px;letter-spacing:1px;">🗑️ RESET TOTALE PARTECIPANTI E VOTI</button>
       <div class="add-form" style="border:2px solid #fde68a">
-        <div class="add-title" style="color:#92400e">➕ Aggiungi partecipante</div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:11px;">
+          <div class="add-title" style="color:#92400e;margin-bottom:0;">➕ Aggiungi partecipante</div>
+          <label for="import-file" style="background:linear-gradient(135deg,#15803d,#166534);color:white;border-radius:8px;padding:6px 12px;font-size:12px;font-weight:700;cursor:pointer;">📂 Importa lista</label>
+          <input type="file" id="import-file" accept=".xlsx,.csv" style="display:none;" onchange="importaLista(this)"/>
+        </div>
         <input type="text" class="add-input" id="o-new-name" placeholder="Nome o numero esibizione..."/>
         <input type="text" class="add-input" id="o-new-coreo" placeholder="Titolo coreografia (opzionale)..." style="margin-bottom:10px;"/>
         <div class="slbl">Genere</div>
@@ -1639,6 +1643,60 @@ function resetAll(){
     renderOrganizzatore();
     alert('✅ Reset completato su tutti i dispositivi!');
   });
+}
+
+function importaLista(input){
+  var file = input.files[0];
+  if(!file) return;
+  var ext = file.name.split('.').pop().toLowerCase();
+  
+  if(ext === 'csv'){
+    var reader = new FileReader();
+    reader.onload = function(e){
+      var lines = e.target.result.split('\n');
+      var imported = 0;
+      // Skip header row
+      for(var i=1;i<lines.length;i++){
+        var cols = lines[i].split(',');
+        if(cols.length < 4) continue;
+        var numero = parseInt(cols[0]) || (concorrenti.length+1);
+        var nome = (cols[1]||'').trim().replace(/"/g,'');
+        var coreo = (cols[2]||'').trim().replace(/"/g,'');
+        var genere = (cols[3]||'').trim().replace(/"/g,'');
+        var tipo = (cols[4]||'Assolo').trim().replace(/"/g,'');
+        var cat = (cols[5]||'Young').trim().replace(/"/g,'');
+        if(!nome) continue;
+        // Validate
+        if(GENERI.indexOf(genere)<0) genere=GENERI[0];
+        if(TIPI.indexOf(tipo)<0) tipo='Assolo';
+        if(CAT_GRUPPO.indexOf(cat)<0) cat='Young';
+        concorrenti.push({nome:nome,coreografia:coreo,tipo:tipo,genere:genere,catGruppo:cat,blocked:false,numero:numero});
+        imported++;
+      }
+      if(imported>0){
+        saveData(concorrenti,undefined);
+        alert('✅ Importati '+imported+' partecipanti!');
+        renderOrganizzatore();
+      } else {
+        alert('❌ Nessun partecipante trovato. Controlla il formato del file.');
+      }
+    };
+    reader.readAsText(file);
+  } else if(ext === 'xlsx'){
+    // Read xlsx using FileReader as binary
+    var reader = new FileReader();
+    reader.onload = function(e){
+      try {
+        // Parse xlsx manually (basic support)
+        alert('📂 Per Excel usa il formato CSV.\nIn Numbers/Excel: File → Esporta → CSV');
+      } catch(err){
+        alert('❌ Errore lettura file: '+err.message);
+      }
+    };
+    reader.readAsArrayBuffer(file);
+  }
+  // Reset input
+  input.value = '';
 }
 
 function doAggiungi(){
