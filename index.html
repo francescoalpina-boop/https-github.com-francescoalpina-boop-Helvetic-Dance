@@ -842,12 +842,12 @@ var CAT_COLORS = {
   Junior: {accent:'#1d4ed8',light:'#dbeafe'},
   Senior: {accent:'#be185d',light:'#fce7f3'}
 };
-var GIUDICI  = ['Mia Molinari','Betty Style','Davide Cauli',"Elena D'Amario"];
+var GIUDICI  = ['Mia Molinari','Betty Style','Davide Cauli',"Marcello Sacchetta"];
 var GIUDICI_PIN = {
   'Mia Molinari': 'MOLINARI',
   'Betty Style':  'STYLE',
   'Davide Cauli': 'CAULI',
-  "Elena D'Amario": 'DAMARIO'
+  'Marcello Sacchetta': 'SACCHETTA'
 };
 
 // Event config (loaded from Firebase, editable by organizer)
@@ -1089,13 +1089,39 @@ function loginAs(g){
   syncLoad();
   if(syncTimer) clearInterval(syncTimer);
   syncTimer=setInterval(syncLoad,8000);
+  
+  // Auto-save voti every 30 seconds
+  if(window._autoSaveTimer) clearInterval(window._autoSaveTimer);
+  window._autoSaveTimer = setInterval(function(){
+    if(mode==='giudice' && giudice && Object.keys(voti).length>0){
+      // Save current scores if in vote screen
+      if(screen==='vote' && currentIdx!==null){
+        var scores={}; 
+        for(var k in currentScores) scores[k]=currentScores[k];
+        voti[currentIdx]={scores:scores, note:document.getElementById('vote-notes')?document.getElementById('vote-notes').value:''};
+      }
+      // Sync to server silently
+      fbSet('voti/'+giudice.replace(/ /g,'-').toLowerCase(), voti, function(){
+        // Show brief save indicator
+        var el = document.getElementById('g-sync');
+        if(el){ 
+          el.textContent='💾 Salvato';
+          setTimeout(function(){ 
+            var t=new Date().toLocaleTimeString('it-IT',{hour:'2-digit',minute:'2-digit'});
+            if(el) el.textContent='✓ '+t;
+          }, 1500);
+        }
+      });
+    }
+  }, 30000);
+  
   setTimeout(function(){showWelcome(g);}, 600);
 }
 
 function doLogout(){
   mode='login'; giudice=null; voti={}; allVoti={};
   if(syncTimer) clearInterval(syncTimer);
-  // Reload page to reset everything cleanly
+  if(window._autoSaveTimer) clearInterval(window._autoSaveTimer);
   window.location.reload();
 }
 
