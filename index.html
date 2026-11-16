@@ -794,7 +794,7 @@ function cambiaLingua(lang){
   if(adminrl) adminrl.textContent = T('accessoRiservato');
 }
 
-var GENERI = ['Classico','Contemporaneo','Moderno','Hip Hop','Urban Dance Mix Style','Misti'];
+var GENERI = ['Assolo classico','Assolo cont./mod.','Passo a due','Gruppi junior','Gruppi senior'];
 var TIPI   = ['Assolo','Passo a Due','Gruppo'];
 var CAT_GRUPPO = ['Young','Junior','Senior'];
 var TIPO_ICO = {Assolo:'🕺','Passo a Due':'👯',Gruppo:'🎭'};
@@ -870,12 +870,11 @@ var CATEGORIE = [
   {id:'presenza',label:'Presenza scenica',max:10}
 ];
 var COLORS = {
-  'Classico':             {accent:'#be185d',light:'#fce7f3',dark:'#9d174d',tab:'#f9a8d4'},
-  'Contemporaneo':        {accent:'#1d4ed8',light:'#dbeafe',dark:'#1e3a8a',tab:'#93c5fd'},
-  'Moderno':              {accent:'#7c3aed',light:'#ede9fe',dark:'#5b21b6',tab:'#c4b5fd'},
-  'Hip Hop':              {accent:'#15803d',light:'#dcfce7',dark:'#14532d',tab:'#86efac'},
-  'Urban Dance Mix Style':{accent:'#ea580c',light:'#ffedd5',dark:'#c2410c',tab:'#fdba74'},
-  'Misti':                {accent:'#0891b2',light:'#cffafe',dark:'#0e7490',tab:'#67e8f9'}
+  'Assolo classico':  {accent:'#be185d',light:'#fce7f3',dark:'#9d174d',tab:'#f9a8d4'},
+  'Assolo cont./mod.':{accent:'#7c3aed',light:'#ede9fe',dark:'#5b21b6',tab:'#c4b5fd'},
+  'Passo a due':      {accent:'#0891b2',light:'#cffafe',dark:'#0e7490',tab:'#67e8f9'},
+  'Gruppi junior':    {accent:'#1d4ed8',light:'#dbeafe',dark:'#1e3a8a',tab:'#93c5fd'},
+  'Gruppi senior':    {accent:'#ea580c',light:'#ffedd5',dark:'#c2410c',tab:'#fdba74'}
 };
 var PIN_ADMIN='1234', PIN_SBLOCCO='2026';
 var SKEY='hdc-v9-c', vKey=function(g){return 'hdc-v9-v-'+g.replace(/ /g,'-').toLowerCase();};
