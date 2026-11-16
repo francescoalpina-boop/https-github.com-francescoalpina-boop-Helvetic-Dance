@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="it">
 <head>
@@ -1655,23 +1654,45 @@ function importaLista(input){
   if(ext === 'csv'){
     var reader = new FileReader();
     reader.onload = function(e){
-      var lines = e.target.result.split('\n');
-      var imported = 0;
-      // Skip header row
-      for(var i=1;i<lines.length;i++){
-        var cols = lines[i].split(',');
-        if(cols.length < 4) continue;
-        var numero = parseInt(cols[0]) || (concorrenti.length+1);
-        var nome = (cols[1]||'').trim().replace(/"/g,'');
-        var coreo = (cols[2]||'').trim().replace(/"/g,'');
-        var genere = (cols[3]||'').trim().replace(/"/g,'');
-        var tipo = (cols[4]||'Assolo').trim().replace(/"/g,'');
-        var cat = (cols[5]||'Young').trim().replace(/"/g,'');
-        if(!nome) continue;
-        // Validate
-        if(GENERI.indexOf(genere)<0) genere=GENERI[0];
-        if(TIPI.indexOf(tipo)<0) tipo='Assolo';
-        if(CAT_GRUPPO.indexOf(cat)<0) cat='Young';
+      // Normalize line endings and split
+      var raw = e.target.result.replace(/\r\n/g,'\n').replace(/\r/g,'\n');
+      var lines = raw.split('\n').filter(function(l){return l.trim()!=='';});
+      if(lines.length<1){ alert('❌ File vuoto.'); return; }
+
+      // Auto-detect separator: comma or semicolon (Mac italiano usa ;)
+      var firstLine = lines[0];
+      var sep = (firstLine.split(';').length > firstLine.split(',').length) ? ';' : ',';
+
+      // Detect if first row is a header (contains "nome" or "genere")
+      var lowFirst = firstLine.toLowerCase();
+      var startRow = (lowFirst.indexOf('nome')>=0 || lowFirst.indexOf('genere')>=0 || lowFirst.indexOf('numero')>=0) ? 1 : 0;
+
+      // Alias per valori scritti in modo diverso
+      var GEN_ALIAS = {'modern':'Moderno','classica':'Classico','contemporary':'Contemporaneo','hiphop':'Hip Hop','urban':'Urban Dance Mix Style','urban dance':'Urban Dance Mix Style','mix style':'Urban Dance Mix Style','misto':'Misti'};
+      var TIPO_ALIAS = {'solo':'Assolo','duo':'Passo a Due','passo a 2':'Passo a Due','gruppo':'Gruppo','group':'Gruppo'};
+
+      // Helper: match a value case-insensitively against an allowed list, with aliases
+      function match(val, list, fallback, alias){
+        var v = (val||'').trim().replace(/^"|"$/g,'').toLowerCase();
+        if(!v) return fallback;
+        for(var k=0;k<list.length;k++){ if(list[k].toLowerCase()===v) return list[k]; }
+        if(alias && alias[v]) return alias[v];
+        return fallback;
+      }
+
+      var imported = 0, scartati = 0;
+      for(var i=startRow;i<lines.length;i++){
+        var cols = lines[i].split(sep);
+        if(cols.length < 2) continue;
+        var numero = parseInt((cols[0]||'').replace(/"/g,'')) || (concorrenti.length+1);
+        var nome = (cols[1]||'').trim().replace(/^"|"$/g,'');
+        var coreo = (cols[2]||'').trim().replace(/^"|"$/g,'');
+        var genere = match(cols[3], GENERI, GENERI[0], GEN_ALIAS);
+        var tipo = match(cols[4], TIPI, 'Assolo', TIPO_ALIAS);
+        var cat = match(cols[5], CAT_GRUPPO, 'Young');
+        // Se manca il nome (gruppi) usa la coreografia come nome
+        if(!nome){ nome = coreo; coreo=''; }
+        if(!nome){ scartati++; continue; }
         concorrenti.push({nome:nome,coreografia:coreo,tipo:tipo,genere:genere,catGruppo:cat,blocked:false,numero:numero});
         imported++;
       }
@@ -1680,22 +1701,12 @@ function importaLista(input){
         alert('✅ Importati '+imported+' partecipanti!');
         renderOrganizzatore();
       } else {
-        alert('❌ Nessun partecipante trovato. Controlla il formato del file.');
+        alert('❌ Nessun partecipante trovato.\nControlla che il file sia in formato CSV con le colonne:\nNumero, Nome, Coreografia, Genere, Tipo, Categoria');
       }
     };
     reader.readAsText(file);
-  } else if(ext === 'xlsx'){
-    // Read xlsx using FileReader as binary
-    var reader = new FileReader();
-    reader.onload = function(e){
-      try {
-        // Parse xlsx manually (basic support)
-        alert('📂 Per Excel usa il formato CSV.\nIn Numbers/Excel: File → Esporta → CSV');
-      } catch(err){
-        alert('❌ Errore lettura file: '+err.message);
-      }
-    };
-    reader.readAsArrayBuffer(file);
+  } else {
+    alert('📂 Serve un file CSV.\nIn Numbers: File → Esporta in → CSV');
   }
   // Reset input
   input.value = '';
