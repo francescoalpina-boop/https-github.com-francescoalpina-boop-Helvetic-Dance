@@ -1833,28 +1833,14 @@ function renderClassifica(){
     b.onclick=function(){filtroG=g;renderClassifica();};
     fg.appendChild(b);
   });
-  var ft=document.getElementById('class-ft'); ft.innerHTML='';
-  ['Tutti'].concat(TIPI).forEach(function(t){
-    var b=document.createElement('button');
-    b.className='fbtn '+(filtroT===t?'fbtn-on':'fbtn-off');
-    b.textContent=t;
-    b.onclick=function(){filtroT=t;renderClassifica();};
-    ft.appendChild(b);
-  });
+  // Filtri Tipo e Categoria rimossi: ogni categoria è gia una classifica a sé
+  var ft=document.getElementById('class-ft'); if(ft) ft.innerHTML='';
   var fc=document.getElementById('class-fc'); if(fc) fc.innerHTML='';
-  if(!fc){fc=document.createElement('div');fc.id='class-fc';fc.className='filter-row';document.getElementById('class-ft').after(fc);}
-  ['Tutti'].concat(CAT_GRUPPO).forEach(function(cat){
-    var b=document.createElement('button');
-    b.className='fbtn '+(filtroC===cat?'fbtn-on':'fbtn-off');
-    b.textContent=cat;
-    b.onclick=function(){filtroC=cat;renderClassifica();};
-    fc.appendChild(b);
-  });
 
   var items=concorrenti.map(function(c,i){
     return {c:c,idx:i,totale:voti[i]?calcTot(voti[i].scores):null,gt:getGT(i)};
   }).filter(function(x){
-    return (filtroG==='Tutti'||x.c.genere===filtroG)&&(filtroT==='Tutti'||x.c.tipo===filtroT)&&(filtroC==='Tutti'||x.c.catGruppo===filtroC);
+    return (filtroG==='Tutti'||x.c.genere===filtroG);
   }).sort(function(a,b){return (b.gt||-1)-(a.gt||-1);});
 
   var body=document.getElementById('class-body'); body.innerHTML='';
@@ -2061,19 +2047,16 @@ var premGroups=[], premGroupIdx=0, premItemIdx=0;
 
 function buildPremGroups(){
   var groups=[];
+  // Una classifica (podio 1-2-3) per ciascuna delle 5 categorie
   GENERI.forEach(function(genere){
-    TIPI.forEach(function(tipo){
-      CAT_GRUPPO.forEach(function(cat){
-        var items=concorrenti.map(function(c,i){
-          var gt=0;
-          GIUDICI.forEach(function(jn){var jv=allVoti[jn];if(jv&&jv[i]&&jv[i].scores) Object.values(jv[i].scores).forEach(function(s){gt+=s;});});
-          return {c:c,idx:i,gt:gt};
-        }).filter(function(x){
-          return !x.c.blocked&&x.gt>0&&x.c.genere===genere&&x.c.tipo===tipo&&x.c.catGruppo===cat;
-        }).sort(function(a,b){return b.gt-a.gt;});
-        if(items.length>0) groups.push({label:genere+' · '+tipo+' · '+cat,genere:genere,tipo:tipo,cat:cat,items:items});
-      });
-    });
+    var items=concorrenti.map(function(c,i){
+      var gt=0;
+      GIUDICI.forEach(function(jn){var jv=allVoti[jn];if(jv&&jv[i]&&jv[i].scores) Object.values(jv[i].scores).forEach(function(s){gt+=s;});});
+      return {c:c,idx:i,gt:gt};
+    }).filter(function(x){
+      return !x.c.blocked&&x.gt>0&&x.c.genere===genere;
+    }).sort(function(a,b){return b.gt-a.gt;});
+    if(items.length>0) groups.push({label:genere,genere:genere,items:items});
   });
   return groups;
 }
