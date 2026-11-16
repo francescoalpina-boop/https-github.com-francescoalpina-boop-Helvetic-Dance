@@ -1471,19 +1471,9 @@ function saveVote(){
   voti[currentIdx]={scores:scores,note:document.getElementById('vote-notes').value};
   syncSave();
   if(mode==='giudice'){
-    // Find next unvoted participant
-    var next=-1;
-    for(var i=currentIdx+1;i<concorrenti.length;i++){
-      if(!concorrenti[i].blocked&&!voti[i]){next=i;break;}
-    }
-    if(next>=0){
-      // Go to next unvoted
-      openVote(next);
-    } else {
-      // All voted - show list with summary
-      showScreen('giudice');
-      renderGiudice();
-    }
+    // Torna alla lista (il giudice sceglie il prossimo)
+    showScreen('giudice');
+    renderGiudice();
   } else {
     showScreen('organizzatore');
     renderCurrent();
@@ -2329,8 +2319,9 @@ function showWelcome(g){
 }
 function closeWelcome(){
   document.getElementById('modal-welcome').style.display='none';
-  // Auto-open first unvoted participant
-  autoOpenFirst();
+  // Mostra la lista partecipanti (il giudice sceglie chi votare)
+  showScreen('giudice');
+  renderGiudice();
 }
 
 function toggleStorico(){
