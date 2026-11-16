@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="it">
 <head>
@@ -1697,9 +1698,9 @@ function importaLista(input){
         imported++;
       }
       if(imported>0){
-        saveData(concorrenti,undefined);
-        alert('✅ Importati '+imported+' partecipanti!');
+        syncSave();
         renderOrganizzatore();
+        alert('✅ Importati '+imported+' partecipanti!');
       } else {
         alert('❌ Nessun partecipante trovato.\nControlla che il file sia in formato CSV con le colonne:\nNumero, Nome, Coreografia, Genere, Tipo, Categoria');
       }
