@@ -2404,24 +2404,19 @@ function skipSondaggio(){
 }
 
 function resetSondaggi(){
-  if(!confirm('Eliminare tutte le valutazioni dei giudici?')) return;
-  // Direct DELETE to Firebase REST API
-  fetch(FB_URL + '/sondaggi.json', {
-    method: 'DELETE',
-    headers: {'Content-Type': 'application/json'}
-  })
-  .then(function(r){
-    alert('✅ Valutazioni eliminate!');
-  })
-  .catch(function(e){
-    // Try PUT null as fallback
-    fetch(FB_URL + '/sondaggi.json', {
-      method: 'PUT',
-      headers: {'Content-Type': 'application/json'},
-      body: 'null'
-    }).then(function(){ alert('✅ Valutazioni eliminate!'); })
-    .catch(function(){ alert('❌ Errore. Controlla la connessione.'); });
+  if(!confirm('Eliminare tutti i voti dei giudici?\n\nLa lista dei partecipanti resta intatta: i giudici potranno rivotare da zero.')) return;
+  // Cancella i PUNTEGGI di ogni giudice (mantiene i partecipanti)
+  GIUDICI.forEach(function(jn){
+    fbSet('voti/'+jn.replace(/ /g,'-').toLowerCase(), {}, function(){});
   });
+  // Cancella anche il questionario di gradimento di fine gara
+  fbSet('sondaggi', null, function(){});
+  // Azzera lo stato in memoria e aggiorna la schermata
+  voti={};
+  allVoti={};
+  if(typeof updateSyncLabel==='function') updateSyncLabel();
+  renderOrganizzatore();
+  alert('✅ Voti dei giudici eliminati!\nLa lista dei partecipanti è rimasta.');
 }
 
 function viewSondaggi(){
